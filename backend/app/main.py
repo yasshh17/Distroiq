@@ -1,7 +1,7 @@
+import logging
 from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
 
-import sqlalchemy as sa
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -9,17 +9,19 @@ from app.core.config import settings
 from app.core.database import engine
 from app.api.v1.routes import health, chat, auth, files
 
+logger = logging.getLogger(__name__)
+
 
 # ── Lifespan ──────────────────────────────────────────────────────────
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
-    """Verify the DB is reachable on startup; dispose the engine on shutdown."""
-    async with engine.begin() as conn:
-        await conn.execute(sa.text("SELECT 1"))
+    """Start up the app; dispose the DB engine pool on shutdown."""
+    logger.info("DistroIQ API starting up")
 
     yield
 
+    logger.info("DistroIQ API shutting down")
     await engine.dispose()
 
 
