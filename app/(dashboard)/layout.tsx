@@ -1,5 +1,8 @@
 import type { ReactNode } from "react";
-import { ChevronRight, AlertCircle, AlertTriangle } from "lucide-react";
+import { AlertCircle, AlertTriangle } from "lucide-react";
+
+import { QuickQueriesPanel } from "@/components/features/sidebar/QuickQueriesPanel";
+import { UserChip } from "@/components/features/auth/UserChip";
 
 const SOURCES = [
   { name: "Warehouse ERP", status: "green" as const, count: "2.4k" },
@@ -30,15 +33,6 @@ const ALERTS = [
   },
 ];
 
-const QUERIES = [
-  "Inventory by warehouse",
-  "Pending orders > 48h",
-  "Low stock SKUs",
-  "Top suppliers this week",
-  "Customer order history",
-  "Reorder recommendations",
-];
-
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[#0f1623]">
@@ -65,15 +59,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             RAG · LIVE DATA
           </span>
 
-          {/* Pulsing status dot */}
-          <span className="relative flex h-2 w-2 items-center justify-center">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-60" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-green-400" />
-          </span>
-
-          <span className="font-mono text-[11px] uppercase tracking-widest text-slate-400">
-            OPS STAFF
-          </span>
+          <UserChip />
         </div>
       </header>
 
@@ -148,17 +134,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <p className="mb-2 px-1 font-mono text-[10px] uppercase tracking-widest text-slate-500">
               Quick Queries
             </p>
-            <div className="flex flex-col gap-0.5">
-              {QUERIES.map((q, i) => (
-                <button
-                  key={i}
-                  className="group flex items-center gap-2 rounded-md px-2 py-[7px] text-left text-[12px] text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-slate-200"
-                >
-                  <ChevronRight className="h-3 w-3 shrink-0 text-slate-600 transition-colors group-hover:text-blue-400" />
-                  {q}
-                </button>
-              ))}
-            </div>
+            <QuickQueriesPanel />
           </div>
         </aside>
 
