@@ -6,8 +6,7 @@ name: Deploy
 # This workflow's sole job is to trigger the Render deploy hook for the
 # backend service after a push to main.
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 # Only one deploy at a time; cancel the in-progress run if a new commit lands.
 concurrency:
