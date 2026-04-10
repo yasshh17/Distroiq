@@ -1,0 +1,4 @@
+# Development / test dependencies — NOT installed in the production Dockerfile.
+# CI installs both requirements.txt and this file.
+pytest>=8.2.0
+pytest-asyncio>=0.23.0    # for future async tests

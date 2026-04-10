@@ -1,0 +1,26 @@
+name: Deploy
+
+# Vercel auto-deploys the frontend on every push to main via its GitHub
+# integration — no workflow step required for the frontend.
+#
+# This workflow's sole job is to trigger the Render deploy hook for the
+# backend service after a push to main.
+on:
+  push:
+    branches: [main]
+
+# Only one deploy at a time; cancel the in-progress run if a new commit lands.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  deploy-backend:
+    name: Deploy backend to Render
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Render deploy hook
+        run: |
+          curl --silent --show-error --fail \
+            "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
