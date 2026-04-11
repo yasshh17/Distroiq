@@ -14,7 +14,6 @@ import { WelcomeScreen } from "@/components/features/chat/WelcomeScreen";
 import { MessageRow } from "@/components/features/chat/MessageRow";
 import { UserBubble } from "@/components/features/chat/UserBubble";
 import { AIBubble } from "@/components/features/chat/AIBubble";
-import { TypingBubble } from "@/components/features/chat/TypingIndicator";
 import { DataTable } from "@/components/features/chat/DataTable";
 import { AlertBanner } from "@/components/features/chat/AlertBanner";
 import { EmailCard } from "@/components/features/chat/EmailCard";
@@ -189,10 +188,45 @@ export default function DashboardPage() {
                   );
                 }
 
-                // Streaming placeholder
+                // Streaming placeholder — no content yet
                 if (msg.isStreaming && !msg.content) {
                   return (
-                    <TypingBubble key={msg.id} />
+                    <MessageRow key={msg.id} role="ai">
+                      <AIBubble>
+                        <div className="space-y-2.5 py-0.5">
+                          <div className="h-2.5 w-[85%] animate-pulse rounded-full bg-slate-200" />
+                          <div className="h-2.5 w-[65%] animate-pulse rounded-full bg-slate-200" />
+                          <div className="h-2.5 w-[75%] animate-pulse rounded-full bg-slate-200" />
+                        </div>
+                      </AIBubble>
+                    </MessageRow>
+                  );
+                }
+
+                // Error state
+                if (msg.isError) {
+                  const lastUserMsg = messages
+                    .slice(0, messages.indexOf(msg))
+                    .findLast((m) => m.role === "user");
+
+                  return (
+                    <MessageRow key={msg.id} role="ai">
+                      <div className="flex flex-col gap-2">
+                        <AlertBanner
+                          type="danger"
+                          title="Couldn't reach the server"
+                          message="The request failed. Check your connection or try again."
+                        />
+                        {lastUserMsg && (
+                          <button
+                            onClick={() => sendMessage(lastUserMsg.content)}
+                            className="self-start rounded-md border border-slate-200 bg-white px-3 py-1.5 font-mono text-[11px] font-medium text-slate-600 shadow-sm transition-colors hover:border-blue-300 hover:text-blue-600"
+                          >
+                            Retry
+                          </button>
+                        )}
+                      </div>
+                    </MessageRow>
                   );
                 }
 
@@ -207,26 +241,24 @@ export default function DashboardPage() {
                   >
                     <AIBubble>
                       {msg.isStreaming ? (
-                        // While streaming: show dots, not raw JSON
+                        // ONLY show dots while streaming — never raw content
                         <div className="flex items-center gap-1 py-1">
                           <div className="h-2 w-2 rounded-full bg-slate-300 animate-bounce [animation-delay:-0.3s]" />
                           <div className="h-2 w-2 rounded-full bg-slate-300 animate-bounce [animation-delay:-0.15s]" />
                           <div className="h-2 w-2 rounded-full bg-slate-300 animate-bounce" />
                         </div>
                       ) : msg.parsedContent ? (
-                        // Streaming done + JSON parsed: render rich components
                         <>
                           {msg.parsedContent.text && (
-                            <p className="whitespace-pre-wrap">
+                            <p className="whitespace-pre-wrap leading-relaxed">
                               {msg.parsedContent.text}
                             </p>
                           )}
-                          {msg.parsedContent.components.map((c, i) =>
+                          {msg.parsedContent.components?.map((c, i) =>
                             renderComponent(c, i),
                           )}
                         </>
                       ) : (
-                        // Streaming done + plain text: render as-is
                         <p className="whitespace-pre-wrap">{msg.content}</p>
                       )}
                     </AIBubble>

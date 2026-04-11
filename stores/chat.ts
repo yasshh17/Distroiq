@@ -218,6 +218,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
                 content:
                   "Sorry, I couldn't reach the server. Please try again.",
                 isStreaming: false,
+                isError: true,
               }
             : m,
         ),

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 import { useAuthStore } from "@/stores/auth";
+import { startKeepAlive } from "@/lib/api";
 
 // ── Full-screen loader shown while auth state is resolving ────────────
 
@@ -36,6 +37,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     initialize();
+    startKeepAlive();
     // initialize is a stable store function — safe to omit from deps,
     // but included to satisfy exhaustive-deps without a lint override.
   }, [initialize]);

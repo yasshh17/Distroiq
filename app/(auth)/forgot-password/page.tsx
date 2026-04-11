@@ -17,7 +17,6 @@ const BULLETS = [
 function RightPanel() {
   return (
     <div className="hidden flex-col items-center justify-center bg-[#0f1623] px-14 lg:flex lg:w-[40%]">
-      {/* DQ tile with glow */}
       <div
         className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600"
         style={{
@@ -48,127 +47,39 @@ function RightPanel() {
   );
 }
 
-function isValidEmail(value: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-}
-
-type PasswordStrength = "weak" | "medium" | "strong";
-
-function getPasswordStrength(pwd: string): PasswordStrength | null {
-  if (!pwd) return null;
-  if (pwd.length < 8) return "weak";
-  const hasUpper = /[A-Z]/.test(pwd);
-  const hasLower = /[a-z]/.test(pwd);
-  const hasNumber = /[0-9]/.test(pwd);
-  const hasSpecial = /[^A-Za-z0-9]/.test(pwd);
-  const score = [hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean)
-    .length;
-  if (pwd.length >= 10 && score >= 3) return "strong";
-  if (score >= 2) return "medium";
-  return "weak";
-}
-
-const STRENGTH_CONFIG: Record<
-  PasswordStrength,
-  { label: string; bar: string; text: string; segments: number }
-> = {
-  weak: {
-    label: "Weak",
-    bar: "bg-red-400",
-    text: "text-red-500",
-    segments: 1,
-  },
-  medium: {
-    label: "Medium",
-    bar: "bg-amber-400",
-    text: "text-amber-500",
-    segments: 2,
-  },
-  strong: {
-    label: "Strong",
-    bar: "bg-emerald-500",
-    text: "text-emerald-600",
-    segments: 3,
-  },
-};
-
-interface PasswordStrengthBarProps {
-  strength: PasswordStrength | null;
-}
-
-function PasswordStrengthBar({ strength }: PasswordStrengthBarProps) {
-  if (!strength) return null;
-  const config = STRENGTH_CONFIG[strength];
-
-  return (
-    <div className="mt-1.5 space-y-1">
-      <div className="flex gap-1">
-        {[1, 2, 3].map((n) => (
-          <div
-            key={n}
-            className={`h-1 flex-1 rounded-full transition-colors ${
-              n <= config.segments ? config.bar : "bg-slate-200"
-            }`}
-          />
-        ))}
-      </div>
-      <p className={`font-mono text-[10.5px] font-semibold ${config.text}`}>
-        {config.label}
-      </p>
-    </div>
-  );
-}
-
-export default function SignupPage() {
-  const [fullName, setFullName] = useState("");
+export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
-  const [emailTouched, setEmailTouched] = useState(false);
-  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
-
-  const emailError =
-    emailTouched && email.length > 0 && !isValidEmail(email)
-      ? "Enter a valid email address."
-      : null;
-
-  const passwordStrength = getPasswordStrength(password);
-  const isFormValid =
-    fullName.length > 0 &&
-    email.length > 0 &&
-    !emailError &&
-    password.length >= 8;
+  const [submitted, setSubmitted] = useState(false);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
-      return;
-    }
-
-    if (!isFormValid) return;
-
     setIsLoading(true);
     setError(null);
 
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName },
-      },
-    });
+    try {
+      const supabase = createClient();
+      const { error: authError } = await supabase.auth.resetPasswordForEmail(
+        email,
+        { redirectTo: `${window.location.origin}/reset-password` },
+      );
 
-    if (authError) {
-      setError(authError.message);
+      // Only surface genuine technical/network failures.
+      // Never reveal whether the email address exists in the system.
+      if (authError && authError.status !== 400) {
+        setError("Something went wrong. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
       setIsLoading(false);
       return;
     }
 
-    setEmailSent(true);
+    // Always show success regardless of whether the account exists.
+    setSubmitted(true);
   }
 
   return (
@@ -188,7 +99,7 @@ export default function SignupPage() {
             </span>
           </div>
 
-          {emailSent ? (
+          {submitted ? (
             /* ── Success state ─────────────────────────────────────── */
             <div className="flex flex-col items-center py-6 text-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
@@ -197,18 +108,16 @@ export default function SignupPage() {
               <h2 className="mt-5 text-[22px] font-semibold tracking-tight text-slate-800">
                 Check your email
               </h2>
-              <p className="mt-2 text-[13.5px] leading-relaxed text-slate-400">
-                We sent a confirmation link to{" "}
-                <span className="font-medium text-slate-600">{email}</span>.
-                Click the link to activate your account.
+              <p className="mt-2 max-w-[280px] text-[13.5px] leading-relaxed text-slate-400">
+                If an account exists for this email, you&apos;ll receive a reset
+                link shortly.
               </p>
               <p className="mt-6 text-[13px] text-slate-400">
-                Already confirmed?{" "}
                 <Link
                   href="/login"
                   className="font-medium text-blue-600 hover:text-blue-700"
                 >
-                  Sign in
+                  Back to sign in
                 </Link>
               </p>
             </div>
@@ -216,31 +125,13 @@ export default function SignupPage() {
             /* ── Form ──────────────────────────────────────────────── */
             <>
               <h1 className="text-[24px] font-semibold tracking-tight text-slate-800">
-                Create your account
+                Reset your password
               </h1>
               <p className="mt-1.5 text-[13.5px] text-slate-400">
-                Get started with DistroIQ for free
+                Enter your email and we&apos;ll send you a reset link
               </p>
 
               <form onSubmit={handleSubmit} className="mt-7 space-y-4">
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="full_name"
-                    className="block font-mono text-[10.5px] font-semibold uppercase tracking-wider text-slate-500"
-                  >
-                    Full name
-                  </label>
-                  <Input
-                    id="full_name"
-                    type="text"
-                    placeholder="Jane Smith"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                    autoComplete="name"
-                  />
-                </div>
-
                 <div className="space-y-1.5">
                   <label
                     htmlFor="email"
@@ -254,38 +145,9 @@ export default function SignupPage() {
                     placeholder="you@company.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    onBlur={() => setEmailTouched(true)}
                     required
                     autoComplete="email"
-                    className={
-                      emailError
-                        ? "border-red-400 focus-visible:ring-red-200"
-                        : undefined
-                    }
                   />
-                  {emailError !== null && (
-                    <p className="text-[11.5px] text-red-500">{emailError}</p>
-                  )}
-                </div>
-
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="password"
-                    className="block font-mono text-[10.5px] font-semibold uppercase tracking-wider text-slate-500"
-                  >
-                    Password
-                  </label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={8}
-                    autoComplete="new-password"
-                  />
-                  <PasswordStrengthBar strength={passwordStrength} />
                 </div>
 
                 {error !== null && (
@@ -298,26 +160,25 @@ export default function SignupPage() {
                   type="submit"
                   size="lg"
                   className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800"
-                  disabled={isLoading || !isFormValid}
+                  disabled={isLoading}
                 >
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating account…
+                      Sending…
                     </>
                   ) : (
-                    "Create account"
+                    "Send reset link"
                   )}
                 </Button>
               </form>
 
               <p className="mt-5 text-center text-[13px] text-slate-400">
-                Already have an account?{" "}
                 <Link
                   href="/login"
                   className="font-medium text-blue-600 hover:text-blue-700"
                 >
-                  Sign in
+                  Back to sign in
                 </Link>
               </p>
             </>

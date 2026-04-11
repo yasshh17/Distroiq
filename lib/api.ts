@@ -41,3 +41,17 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+// ── Keep-alive ────────────────────────────────────────────────────────
+// Pings the backend health endpoint every 10 minutes to prevent
+// Render free-tier instances from spinning down between requests.
+
+export function startKeepAlive() {
+  const ping = async () => {
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/health`);
+    } catch {}
+  };
+  ping(); // immediate ping on load
+  setInterval(ping, 10 * 60 * 1000); // every 10 min
+}

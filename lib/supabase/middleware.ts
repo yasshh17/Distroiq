@@ -40,9 +40,17 @@ export async function updateSession(request: NextRequest) {
 
   // getUser() validates the JWT with Supabase's server — never trust a
   // locally decoded token for auth decisions.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch (error: unknown) {
+    // Refresh token expired or invalid —
+    // middleware will redirect to login naturally
+    if (process.env.NODE_ENV === "development") {
+      console.debug("Session refresh failed — redirecting to login");
+    }
+  }
 
   return { supabaseResponse, user };
 }

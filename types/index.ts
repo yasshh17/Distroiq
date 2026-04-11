@@ -90,6 +90,7 @@ export interface ChatMessage {
   content: string;
   components: ChatComponent[];
   isStreaming: boolean;
+  isError?: boolean;
   timestamp: string;
   parsedContent?: ParsedContent;
 }
