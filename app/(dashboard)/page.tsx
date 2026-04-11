@@ -296,7 +296,7 @@ export default function DashboardPage() {
               <Send className="h-3.5 w-3.5 text-white" />
             </button>
           </form>
-          <p className="mt-2 text-center font-mono text-[10px] text-slate-300">
+          <p className="text-xs text-slate-400 font-mono text-center py-2">
             RAG-powered · Responses grounded in live operational data
           </p>
         </div>
