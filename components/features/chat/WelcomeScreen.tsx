@@ -48,8 +48,8 @@ export function WelcomeScreen() {
         suppliers
       </p>
 
-      {/* 2×2 card grid */}
-      <div className="mt-8 grid w-full max-w-[400px] grid-cols-2 gap-3">
+      {/* 1-col on mobile → 2-col on sm+ */}
+      <div className="mt-8 grid w-full max-w-full grid-cols-1 gap-3 sm:max-w-[400px] sm:grid-cols-2">
         {CARDS.map((card, i) => (
           <button
             key={card.label}

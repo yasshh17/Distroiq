@@ -90,9 +90,6 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
 
-      console.log("Session debug:", session);
-      console.log("Access token:", session?.access_token);
-
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       const url = `${apiUrl}/api/v1/chat/stream?message=${encodeURIComponent(text.trim())}`;
 
@@ -104,8 +101,6 @@ export const useChatStore = create<ChatState>()((set, get) => ({
           "Cache-Control": "no-cache",
         },
       });
-
-      console.log("Response status:", response.status);
 
       if (!response.ok || !response.body) {
         throw new Error(`HTTP ${response.status}`);

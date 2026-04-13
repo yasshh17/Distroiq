@@ -174,7 +174,7 @@ export default function SignupPage() {
   return (
     <div className="flex h-screen">
       {/* ── Left: form ─────────────────────────────────────────────── */}
-      <div className="flex w-full flex-col items-center justify-center bg-white px-8 lg:w-[60%]">
+      <div className="flex w-full flex-col items-center justify-center bg-white px-6 sm:px-8 lg:w-[60%]">
         <div className="w-full max-w-[360px]">
           {/* Brand */}
           <div className="mb-8 flex items-center gap-2.5">

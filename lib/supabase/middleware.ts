@@ -44,7 +44,7 @@ export async function updateSession(request: NextRequest) {
   try {
     const { data } = await supabase.auth.getUser();
     user = data.user;
-  } catch (error: unknown) {
+  } catch (_error: unknown) {
     // Refresh token expired or invalid —
     // middleware will redirect to login naturally
     if (process.env.NODE_ENV === "development") {

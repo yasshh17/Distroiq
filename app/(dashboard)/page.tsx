@@ -137,26 +137,31 @@ export default function DashboardPage() {
   return (
     <>
       {/* ── Toolbar ──────────────────────────────────────────────── */}
-      <div className="flex h-[50px] shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4">
-        <div className="flex items-center gap-0.5">
-          {TABS.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`rounded-md px-3 py-1.5 text-[12.5px] font-medium transition-colors ${
-                tab === activeTab
-                  ? "bg-slate-900 text-white"
-                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
+      <div className="flex h-[50px] shrink-0 items-center gap-2 border-b border-slate-200 bg-white px-4">
+        {/* Tabs — horizontally scrollable on mobile, no visible scrollbar */}
+        <div className="relative min-w-0 flex-1">
+          <div className="no-scrollbar flex items-center gap-0.5 overflow-x-auto">
+            {TABS.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`shrink-0 rounded-md px-3 py-1.5 text-[12.5px] font-medium transition-colors ${
+                  tab === activeTab
+                    ? "bg-slate-900 text-white"
+                    : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+          {/* Fade hint — visible on mobile only */}
+          <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-white to-transparent lg:hidden" />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="hidden shrink-0 items-center gap-2 lg:flex">
           <span
             className={`h-1.5 w-1.5 rounded-full transition-colors ${
-              isStreaming ? "bg-blue-400 animate-pulse" : "bg-emerald-400"
+              isStreaming ? "animate-pulse bg-blue-400" : "bg-emerald-400"
             }`}
           />
           <span className="font-mono text-[11px] text-slate-400">
@@ -167,7 +172,7 @@ export default function DashboardPage() {
 
       {/* ── Message area ─────────────────────────────────────────── */}
       <div className="flex flex-1 flex-col overflow-y-auto">
-        <div className="mx-auto w-full max-w-3xl flex-1 px-6">
+        <div className="mx-auto w-full max-w-3xl flex-1 px-3 sm:px-6">
           {!hasMessages ? (
             <WelcomeScreen />
           ) : (
@@ -272,7 +277,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Input bar ────────────────────────────────────────────── */}
-      <div className="shrink-0 bg-white px-4 pb-4 pt-3 shadow-[0_-1px_0_0_rgb(226,232,240)]">
+      <div className="shrink-0 bg-white px-3 pb-4 pt-3 shadow-[0_-1px_0_0_rgb(226,232,240)] sm:px-4">
         <div className="mx-auto max-w-3xl">
           <form
             onSubmit={handleSubmit}

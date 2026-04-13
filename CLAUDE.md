@@ -1,5 +1,15 @@
 # CLAUDE.md — DistroIQ
 
+## 0. Claude Code Instructions
+- Always read this entire file before starting any task
+- Check .claude/rules/ for the relevant rule file before writing code
+- Never run database migrations without explicit user confirmation
+- Never commit secrets or .env files
+- Run `npm run build` after any frontend changes to catch type errors
+- Run `.venv/bin/python -c "from app.main import app; print('OK')"` after any backend changes
+
+---
+
 ## 1. Project Overview
 
 DistroIQ is an AI-powered operations assistant for distribution companies. Employees ask plain-English questions and receive structured answers sourced from live inventory, order, customer, and supplier data via a RAG (Retrieval-Augmented Generation) pipeline. The system connects to real ERP, OMS, CRM, and EDI data sources and streams responses back to the browser as they are generated.

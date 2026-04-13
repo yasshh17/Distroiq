@@ -1,5 +1,8 @@
+"use client";
+
+import { useState } from "react";
 import type { ReactNode } from "react";
-import { AlertCircle, AlertTriangle } from "lucide-react";
+import { AlertCircle, AlertTriangle, Menu, X } from "lucide-react";
 
 import { QuickQueriesPanel } from "@/components/features/sidebar/QuickQueriesPanel";
 import { UserChip } from "@/components/features/auth/UserChip";
@@ -34,39 +37,76 @@ const ALERTS = [
 ];
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[#0f1623]">
       {/* ── Header ─────────────────────────────────────────────────── */}
       <header className="flex h-14 shrink-0 items-stretch border-b border-white/[0.06]">
-        {/* Brand column — width mirrors sidebar */}
-        <div className="flex w-[260px] shrink-0 items-center gap-2.5 border-r border-white/[0.08] px-4">
+        {/* Brand column — fixed width on desktop, auto on mobile */}
+        <div className="flex shrink-0 items-center gap-2.5 border-r border-white/[0.08] px-4 lg:w-[260px]">
+          {/* Hamburger — mobile only */}
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="mr-0.5 flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:text-white lg:hidden"
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
           <div className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg bg-blue-600">
             <span className="font-mono text-[11px] font-bold text-white">DQ</span>
           </div>
           <span className="text-[15px] font-semibold text-white">DistroIQ</span>
         </div>
 
-        {/* Center label */}
+        {/* Center label — hidden on mobile, flex on desktop */}
         <div className="flex flex-1 items-center justify-center">
-          <span className="font-mono text-[13px] tracking-wide text-slate-300">
+          <span className="hidden font-mono text-[13px] tracking-wide text-slate-300 lg:block">
             AI Operations Assistant · Distribution
           </span>
         </div>
 
         {/* Right controls */}
-        <div className="flex shrink-0 items-center gap-3 px-5">
-          <span className="rounded border border-emerald-500/25 bg-emerald-500/10 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-emerald-400">
+        <div className="flex shrink-0 items-center gap-3 px-4 sm:px-5">
+          <span className="hidden rounded border border-emerald-500/25 bg-emerald-500/10 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-emerald-400 sm:inline-flex">
             RAG · LIVE DATA
           </span>
-
           <UserChip />
         </div>
       </header>
 
       {/* ── Body ───────────────────────────────────────────────────── */}
       <div className="flex flex-1 overflow-hidden">
+        {/* Mobile backdrop — click to close */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black/60 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         {/* ── Sidebar ──────────────────────────────────────────────── */}
-        <aside className="flex w-[260px] shrink-0 flex-col overflow-y-auto border-r border-white/[0.06] bg-[#0f1623] pb-4">
+        {/* On mobile: fixed overlay that slides in from left.        */}
+        {/* On desktop (lg+): static flex child, always visible.      */}
+        <aside
+          className={`fixed inset-y-0 left-0 z-50 flex w-[260px] shrink-0 flex-col overflow-y-auto border-r border-white/[0.06] bg-[#0f1623] pb-4 transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          {/* Close button — mobile only */}
+          <div className="flex items-center justify-between px-4 pb-1 pt-4 lg:hidden">
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+              Menu
+            </span>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 transition-colors hover:text-white"
+              aria-label="Close menu"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
           {/* Connected Sources */}
           <div className="px-3 pt-5">
             <p className="mb-2 px-1 font-mono text-[10px] uppercase tracking-widest text-slate-500">
@@ -83,7 +123,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                       s.status === "green" ? "bg-emerald-400" : "bg-amber-400"
                     }`}
                   />
-                  <span className="flex-1 truncate text-[12.5px] text-slate-300">{s.name}</span>
+                  <span className="flex-1 truncate text-[12.5px] text-slate-300">
+                    {s.name}
+                  </span>
                   <span className="rounded bg-white/[0.06] px-1.5 py-px font-mono text-[10px] text-slate-500">
                     {s.count}
                   </span>
@@ -103,7 +145,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               {ALERTS.map((a, i) => (
                 <div
                   key={i}
-                  className={`cursor-pointer rounded-md bg-white/[0.03] py-2 pl-3 pr-2.5 border-l-2 transition-colors hover:bg-white/[0.06] ${
+                  className={`cursor-pointer rounded-md border-l-2 bg-white/[0.03] py-2 pl-3 pr-2.5 transition-colors hover:bg-white/[0.06] ${
                     a.level === "red" ? "border-l-red-500" : "border-l-amber-400"
                   }`}
                 >
@@ -121,7 +163,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                       {a.title}
                     </p>
                   </div>
-                  <p className="mt-0.5 text-[11px] leading-snug text-slate-400">{a.desc}</p>
+                  <p className="mt-0.5 text-[11px] leading-snug text-slate-400">
+                    {a.desc}
+                  </p>
                 </div>
               ))}
             </div>

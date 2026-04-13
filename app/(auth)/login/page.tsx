@@ -218,7 +218,7 @@ export default function LoginPage() {
   return (
     <div className="flex h-screen">
       {/* ── Left: form ─────────────────────────────────────────────── */}
-      <div className="flex w-full flex-col items-center justify-center bg-white px-8 lg:w-[60%]">
+      <div className="flex w-full flex-col items-center justify-center bg-white px-6 sm:px-8 lg:w-[60%]">
         <Suspense fallback={null}>
           <LoginForm />
         </Suspense>
