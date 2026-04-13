@@ -1,178 +1,186 @@
 # DistroIQ
 
-DistroIQ is an AI-powered operations assistant for distribution companies — employees ask plain-English questions and get structured answers sourced from live inventory, order, customer, and supplier data via a RAG pipeline. The system streams responses from Claude in real time, rendering rich UI components (tables, alerts, email drafts) directly in the chat.
+**AI-powered operations assistant for distribution companies.**  
+Ask plain-English questions. Get instant answers from live inventory, orders, customers, and supplier data.
+
+🔗 **Live Demo:** https://distroiq.vercel.app  
+📁 **Backend API:** https://distroiq.onrender.com/api/v1/health
 
 ---
+
+## What It Does
+
+Distribution operations teams spend hours hunting through ERP dashboards, spreadsheets, and supplier portals to answer simple questions like:
+- "Which SKUs are critically low right now?"
+- "Which customers haven't reordered in 60 days?"
+- "Draft a reorder email to our supplier for SKU MO-7"
+
+DistroIQ replaces that with a single chat interface. Type a question, get a structured answer with tables, alerts, and actionable data — streamed in real time.
+
+---
+
+## Architecture
+┌─────────────────────────────────────────────────────────────┐
+│                        Browser Client                        │
+│                    Next.js 14 + TypeScript                   │
+│         Zustand state · shadcn/ui · Tailwind CSS             │
+└─────────────────────┬───────────────────────────────────────┘
+│  SSE streaming (fetch + ReadableStream)
+│  JWT Bearer token (Supabase Auth)
+┌─────────────────────▼───────────────────────────────────────┐
+│                      FastAPI Backend                         │
+│                    Python 3.12 · Uvicorn                     │
+│         JWT verification · CORS · SSE endpoint              │
+└─────────────────────┬───────────────────────────────────────┘
+│  LangChain astream()
+┌─────────────────────▼───────────────────────────────────────┐
+│                    LangChain + Claude                        │
+│           claude-sonnet-4-20250514 · Streaming              │
+│      System prompt · JSON schema enforcement                 │
+└─────────────────────────────────────────────────────────────┘
+Auth:     Supabase Auth (ES256 JWT · PKCE flow)
+Hosting:  Vercel (frontend) · Render (backend)
+CI/CD:    GitHub Actions (lint → build → deploy)
+
+## Response Pipeline
+
+Every query follows this flow:
+User types query
+↓
+Frontend adds user message + empty AI message (isStreaming: true)
+↓
+GET /api/v1/chat/stream?message=... (with Bearer JWT)
+↓
+FastAPI verifies JWT via Supabase JWKS endpoint (ES256)
+↓
+LangChain builds [SystemMessage, HumanMessage]
+↓
+Claude streams tokens via astream()
+↓
+SSE delta events → frontend accumulates content
+↓
+SSE done event → JSON parsed → rich components rendered
+↓
+User sees: prose + data table + alert banner + source citation
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| **Frontend** | Next.js 14 (App Router), TypeScript strict, Tailwind CSS |
-| **UI components** | shadcn/ui (new-york, zinc), DM Sans + DM Mono |
-| **Client state** | Zustand |
-| **Server state** | React Query |
-| **Backend** | FastAPI (Python 3.12), async SQLAlchemy, Alembic |
-| **AI / RAG** | LangChain, Anthropic Claude (`claude-sonnet-4-20250514`) |
-| **Embeddings** | pgvector (PostgreSQL extension) |
-| **Auth** | Supabase Auth + JWT |
-| **Database** | PostgreSQL + Redis |
-| **Storage** | Cloudflare R2 |
-| **Job queue** | ARQ (async Redis queue) |
-| **Hosting** | Vercel (frontend) · Render (backend) |
-| **Secrets** | Doppler |
+| Frontend | Next.js 14 (App Router), TypeScript strict |
+| Styling | Tailwind CSS, shadcn/ui (new-york/zinc) |
+| State | Zustand, React hooks |
+| Backend | FastAPI, Python 3.12, Uvicorn |
+| AI | LangChain, Anthropic Claude (claude-sonnet-4-20250514) |
+| Auth | Supabase Auth, ES256 JWT, PKCE |
+| Streaming | Server-Sent Events, fetch ReadableStream |
+| Hosting | Vercel + Render |
+| CI/CD | GitHub Actions |
 
----
+## Key Features
+
+- **Streaming AI responses** — tokens stream word by word, 
+  rendered only after completion to avoid raw JSON flash
+- **Rich component rendering** — AI responses parse into 
+  tables, alert banners, email drafts, and source citations
+- **JWT auth** — ES256 asymmetric verification via Supabase 
+  JWKS endpoint, no secrets needed on the verify side
+- **Full auth flow** — signup, login, forgot password, 
+  reset password, delete account
+- **Mobile responsive** — hamburger nav, scrollable tabs, 
+  single-column layout on mobile
+- **Keep-alive** — health ping every 10 minutes prevents 
+  Render free tier spin-down during demos
+
+## Project Structure
+├── app/
+│   ├── (auth)/          # login, signup, forgot-password, reset-password
+│   └── (dashboard)/     # main chat interface
+├── components/
+│   ├── features/
+│   │   ├── auth/        # UserChip, DeleteAccountModal, AuthProvider
+│   │   ├── chat/        # AIBubble, UserBubble, DataTable, AlertBanner
+│   │   └── sidebar/     # QuickQueriesPanel, source indicators
+│   └── ui/              # shadcn/ui primitives
+├── stores/
+│   ├── auth.ts          # Zustand auth state
+│   └── chat.ts          # Zustand chat + streaming state
+├── lib/
+│   ├── api.ts           # Axios instance
+│   └── supabase/        # client, server, middleware
+└── backend/
+    ├── app/
+    │   ├── api/v1/routes/   # chat.py, auth.py, health.py
+    │   ├── core/            # config, security (JWKS verify), dependencies
+    │   └── services/ai/     # chain.py (LangChain + Claude)
 
 ## Local Development
 
 ### Prerequisites
-
 - Node.js 20+
-- Python 3.12+
-- PostgreSQL 15+ with pgvector extension
-- Redis 7+
+- Python 3.12
+- Supabase project
 
-### 1 — Clone and install
-
-```bash
-git clone <repo-url>
-cd distroiq
-```
-
-### 2 — Frontend
+### Frontend
 
 ```bash
-# Install dependencies
 npm install
-
-# Copy env template and fill in values
 cp .env.example .env.local
-
-# Start the dev server (http://localhost:3000)
+# Fill in NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY,
+# NEXT_PUBLIC_API_URL=http://localhost:8000
 npm run dev
 ```
 
-### 3 — Backend
+### Backend
 
 ```bash
 cd backend
-
-# Create and activate a virtual environment
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Copy env template and fill in values
+python3.12 -m venv .venv
+source .venv/bin/activate
+.venv/bin/pip install -r requirements.txt
 cp .env.example .env
-
-# Run database migrations
-alembic upgrade head
-
-# Start the API server (http://localhost:8000)
-uvicorn app.main:app --reload
+# Fill in ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_JWT_SECRET,
+# SUPABASE_SERVICE_ROLE_KEY
+.venv/bin/uvicorn app.main:app --reload --port 8000
 ```
 
-API docs are available at `http://localhost:8000/api/docs` once the server is running.
+### Environment Variables
 
----
-
-## Environment Variables
-
-Copy `.env.example` to `.env.local` (frontend) and `backend/.env.example` to `backend/.env` (backend), then fill in all values.
-
-In production, frontend secrets are set in the Vercel dashboard and backend secrets in the Render dashboard. Do not commit `.env` files.
-
-| Variable | Used by | Description |
+| Variable | Where | Description |
 |---|---|---|
-| `NEXT_PUBLIC_API_URL` | Frontend | Base URL of the FastAPI backend |
-| `NEXT_PUBLIC_SUPABASE_URL` | Frontend | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Frontend | Supabase public anon key |
-| `ANTHROPIC_API_KEY` | Backend | Anthropic API key for Claude |
-| `DATABASE_URL` | Backend | `postgresql+asyncpg://user:pass@host/db` |
-| `REDIS_URL` | Backend | `redis://localhost:6379` |
-| `SUPABASE_URL` | Backend | Supabase project URL |
-| `SUPABASE_ANON_KEY` | Backend | Supabase public anon key |
-| `SUPABASE_JWT_SECRET` | Backend | Used to verify Supabase JWTs server-side |
-| `R2_BUCKET` | Backend | Cloudflare R2 bucket name |
-| `R2_ENDPOINT` | Backend | `https://<account>.r2.cloudflarestorage.com` |
-| `R2_ACCESS_KEY` | Backend | R2 access key ID |
-| `R2_SECRET_KEY` | Backend | R2 secret access key |
-| `FRONTEND_URL` | Backend | Allowed CORS origin (e.g. `https://distroiq.vercel.app`) |
-
----
+| NEXT_PUBLIC_SUPABASE_URL | frontend | Supabase project URL |
+| NEXT_PUBLIC_SUPABASE_ANON_KEY | frontend | Supabase anon key |
+| NEXT_PUBLIC_API_URL | frontend | Backend URL |
+| ANTHROPIC_API_KEY | backend | Claude API key |
+| SUPABASE_URL | backend | Supabase project URL |
+| SUPABASE_JWT_SECRET | backend | Legacy HS256 secret (fallback) |
+| SUPABASE_SERVICE_ROLE_KEY | backend | For account deletion |
 
 ## Deployment
 
-### Frontend — Vercel
+**Frontend → Vercel**  
+Connects to GitHub, auto-deploys on push to main.  
+Set all `NEXT_PUBLIC_*` env vars in Vercel dashboard.
 
-Vercel auto-deploys on every push to `main` via the GitHub integration. No manual steps are needed after the initial setup.
+**Backend → Render**  
+Free tier web service, auto-deploys from GitHub.  
+Set all backend env vars in Render dashboard.  
+Set `FRONTEND_URL=https://distroiq.vercel.app` for CORS.
 
-1. Import the repository at [vercel.com/new](https://vercel.com/new).
-2. Vercel auto-detects Next.js from `vercel.json` — no build settings required.
-3. Add environment variables in the Vercel dashboard (Project → Settings → Environment Variables):
-   - `NEXT_PUBLIC_API_URL`
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+---
+## License
 
-### Backend — Render
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-The backend is defined in `backend/render.yaml`.
+## Built With
 
-1. Create a new **Web Service** at [render.com](https://render.com) and connect the repository.
-2. Set root directory to `backend` and let Render pick up `render.yaml`.
-3. Add all backend environment variables in the Render dashboard.
-4. Set the **pre-deploy command** to run migrations before each deploy:
-   ```
-   alembic upgrade head
-   ```
-5. Copy the **Deploy Hook URL** from the Render dashboard and add it as `RENDER_DEPLOY_HOOK_URL` in GitHub repository secrets — this is what the deploy workflow uses.
-
-### Database — Supabase PostgreSQL
-
-Supabase provides the PostgreSQL instance. After creating a project:
-- Enable the `pgvector` extension: **Database → Extensions → vector**
-- Use the **Session mode** connection string for `DATABASE_URL` (port `5432`)
-
-### Redis — Upstash
-
-Create a Redis database at [upstash.com](https://upstash.com) and copy the `rediss://` TLS URL into `REDIS_URL`.
-
-### Health checks
-
-| Service | URL |
-|---|---|
-| Frontend | `https://distroiq.vercel.app/` |
-| Backend | `https://distroiq-backend.onrender.com/api/v1/health` |
+- [Claude Code](https://claude.ai/code) — AI-powered development assistant
+- [Anthropic Claude](https://anthropic.com) — Large language model for AI responses
+- [Next.js](https://nextjs.org) — React framework
+- [FastAPI](https://fastapi.tiangolo.com) — Python web framework
+- [Supabase](https://supabase.com) — Backend-as-a-Service
+- [Vercel](https://vercel.com) + [Render](https://render.com) — Hosting platforms
 
 ---
 
-## Project Structure
-
-```
-distroiq/
-├── app/                        # Next.js App Router
-│   ├── (auth)/login|signup
-│   └── (dashboard)/layout.tsx + page.tsx
-├── components/
-│   ├── ui/                     # shadcn/ui primitives
-│   └── features/chat/          # Chat UI components
-├── lib/api.ts                  # Axios instance
-├── stores/                     # Zustand stores
-├── types/index.ts
-├── backend/
-│   ├── app/
-│   │   ├── api/v1/routes/      # FastAPI route handlers
-│   │   ├── core/               # Config, DB, security, deps
-│   │   ├── models/             # SQLAlchemy models
-│   │   ├── schemas/            # Pydantic v2 schemas
-│   │   └── services/           # AI/RAG pipeline, R2 storage
-│   ├── alembic/                # Database migrations
-│   ├── Dockerfile
-│   └── requirements.txt
-├── vercel.json                 # Vercel deployment config (frontend)
-├── backend/render.yaml         # Render deployment config (backend)
-└── CLAUDE.md                   # AI assistant context
-```
+**Made with ❤️ for distribution teams everywhere**
