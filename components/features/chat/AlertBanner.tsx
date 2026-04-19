@@ -8,48 +8,34 @@ interface AlertBannerProps {
   message: string;
 }
 
-const ALERT_STYLES: Record<
+const ALERT_CONFIG: Record<
   AlertType,
-  { container: string; icon: string; title: string; Icon: React.ComponentType<{ className?: string }> }
+  { color: string; bg: string; iconClass: string; Icon: React.ComponentType<{ className?: string }> }
 > = {
-  danger: {
-    container: "border-l-red-500 bg-red-50/60 border-red-200/60",
-    icon: "text-red-500",
-    title: "text-red-700",
-    Icon: AlertCircle,
-  },
-  warn: {
-    container: "border-l-amber-400 bg-amber-50/60 border-amber-200/60",
-    icon: "text-amber-500",
-    title: "text-amber-700",
-    Icon: AlertTriangle,
-  },
-  ok: {
-    container: "border-l-emerald-500 bg-emerald-50/60 border-emerald-200/60",
-    icon: "text-emerald-500",
-    title: "text-emerald-700",
-    Icon: CheckCircle2,
-  },
-  info: {
-    container: "border-l-blue-500 bg-blue-50/60 border-blue-200/60",
-    icon: "text-blue-500",
-    title: "text-blue-700",
-    Icon: Info,
-  },
+  danger: { color: "#ef4444", bg: "rgba(239,68,68,0.08)", iconClass: "text-[#ef4444]", Icon: AlertCircle },
+  warn: { color: "#f59e0b", bg: "rgba(245,158,11,0.08)", iconClass: "text-[#f59e0b]", Icon: AlertTriangle },
+  ok: { color: "#22c55e", bg: "rgba(34,197,94,0.08)", iconClass: "text-[#22c55e]", Icon: CheckCircle2 },
+  info: { color: "#3b82f6", bg: "rgba(59,130,246,0.08)", iconClass: "text-[#3b82f6]", Icon: Info },
 };
 
 export function AlertBanner({ type, title, message }: AlertBannerProps) {
-  const styles = ALERT_STYLES[type];
-  const { Icon } = styles;
+  const config = ALERT_CONFIG[type];
+  const { Icon } = config;
 
   return (
     <div
-      className={`my-1 flex items-start gap-2.5 rounded-r-lg border border-l-[3px] px-3.5 py-2.5 ${styles.container}`}
+      className="my-1.5 flex items-start gap-2.5 rounded-r-[8px] px-3.5 py-2.5"
+      style={{
+        borderLeft: `3px solid ${config.color}`,
+        backgroundColor: config.bg,
+      }}
     >
-      <Icon className={`mt-px h-4 w-4 shrink-0 ${styles.icon}`} />
+      <Icon className={`mt-px h-4 w-4 shrink-0 ${config.iconClass}`} />
       <div>
-        <p className={`text-[12.5px] font-semibold ${styles.title}`}>{title}</p>
-        <p className="mt-0.5 text-[12px] leading-snug text-slate-600">{message}</p>
+        <p className={`font-grotesk text-[11px] font-semibold uppercase tracking-wide ${config.iconClass}`}>
+          {title}
+        </p>
+        <p className="mt-0.5 text-[12px] leading-snug text-white/55">{message}</p>
       </div>
     </div>
   );

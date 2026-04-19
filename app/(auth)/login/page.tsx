@@ -5,43 +5,53 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, CheckCircle2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 
 const BULLETS = [
-  "RAG-powered answers from live operational data",
-  "Inventory, orders, customers — all in one place",
-  "Streaming AI responses in real time",
+  {
+    title: "Real-time Network Monitoring",
+    desc: "Sub-millisecond latency for global distribution telemetry tracking.",
+  },
+  {
+    title: "Kinetic Load Balancing",
+    desc: "Automated asset allocation driven by predictive algorithmic models.",
+  },
+  {
+    title: "Hardware-level Encryption",
+    desc: "End-to-end security protocols for critical infrastructure access.",
+  },
 ];
 
 function RightPanel() {
   return (
-    <div className="hidden flex-col items-center justify-center bg-[#0f1623] px-14 lg:flex lg:w-[40%]">
-      {/* DQ tile with glow */}
+    <div className="hidden lg:flex lg:w-[45%] flex-col items-center justify-center bg-[#101c2e] px-14">
+      {/* Watermark circle */}
       <div
-        className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600"
-        style={{
-          boxShadow:
-            "0 0 0 8px rgba(37,99,235,0.12), 0 10px 36px rgba(37,99,235,0.35)",
-        }}
+        className="relative flex h-[280px] w-[280px] items-center justify-center rounded-full"
+        style={{ border: "1px solid rgba(37,99,235,0.1)" }}
       >
-        <span className="font-mono text-[17px] font-bold text-white">DQ</span>
+        <span
+          className="font-grotesk font-bold select-none"
+          style={{ fontSize: "96px", color: "rgba(37,99,235,0.2)", lineHeight: 1 }}
+        >
+          DQ
+        </span>
       </div>
 
-      <h2 className="mt-8 text-[21px] font-semibold tracking-tight text-white">
+      <h2 className="mt-8 text-[24px] font-normal text-white/95" style={{ fontFamily: "'Inter', sans-serif" }}>
         Built for distribution operations
       </h2>
 
-      <ul className="mt-7 w-full max-w-[280px] space-y-4">
-        {BULLETS.map((point) => (
-          <li key={point} className="flex items-start gap-3">
-            <span className="mt-[3px] flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-blue-500/15 ring-1 ring-blue-500/30">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-400" />
+      <ul className="mt-7 w-full max-w-[300px] space-y-5">
+        {BULLETS.map((b) => (
+          <li key={b.title} className="flex items-start gap-3">
+            <span className="mt-1.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#2563eb]/15 ring-1 ring-[#2563eb]/30">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#3b82f6]" />
             </span>
-            <span className="text-[13.5px] leading-snug text-slate-300">
-              {point}
-            </span>
+            <div>
+              <p className="text-[13px] font-medium text-white/90">{b.title}</p>
+              <p className="mt-0.5 text-[12px] leading-snug text-white/45">{b.desc}</p>
+            </div>
           </li>
         ))}
       </ul>
@@ -53,7 +63,6 @@ function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-// useSearchParams requires Suspense — isolated into its own component.
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -62,6 +71,7 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [emailTouched, setEmailTouched] = useState(false);
   const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -80,10 +90,7 @@ function LoginForm() {
     setError(null);
 
     const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
     if (authError) {
       setError(authError.message);
@@ -96,118 +103,115 @@ function LoginForm() {
   }
 
   return (
-    <div className="w-full max-w-[360px]">
-      {/* Brand */}
-      <div className="mb-8 flex items-center gap-2.5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600">
-          <span className="font-mono text-[12px] font-bold text-white">DQ</span>
-        </div>
-        <span className="text-[17px] font-semibold text-slate-800">
-          DistroIQ
-        </span>
-      </div>
-
-      <h1 className="text-[24px] font-semibold tracking-tight text-slate-800">
+    <div className="w-full max-w-[400px]">
+      <h1
+        className="text-[36px] font-light text-white/95 tracking-tight"
+        style={{ fontFamily: "'Inter', sans-serif" }}
+      >
         Sign in to your account
       </h1>
-      <p className="mt-1.5 text-[13.5px] text-slate-400">
-        Enter your credentials to continue
+      <p className="mt-2 text-[14px] text-white/55">
+        Operational access for authorized personnel only
       </p>
 
-      {/* Password-reset success banner */}
       {resetSuccess && (
-        <div className="mt-5 flex items-start gap-2.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-3">
-          <CheckCircle2 className="mt-px h-4 w-4 shrink-0 text-emerald-600" />
-          <p className="text-[12.5px] leading-snug text-emerald-700">
+        <div className="mt-6 flex items-start gap-2.5 rounded-[12px] border border-[#22c55e]/25 bg-[#22c55e]/10 px-4 py-3">
+          <CheckCircle2 className="mt-px h-4 w-4 shrink-0 text-[#22c55e]" />
+          <p className="text-[12.5px] leading-snug text-[#22c55e]">
             Password updated. Please sign in with your new password.
           </p>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="mt-7 space-y-4">
-        <div className="space-y-1.5">
-          <label
-            htmlFor="email"
-            className="block font-mono text-[10.5px] font-semibold uppercase tracking-wider text-slate-500"
-          >
-            Email
+      <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+        {/* Email */}
+        <div className="space-y-2">
+          <label className="font-grotesk block text-[11px] uppercase tracking-widest text-white/30">
+            Command Email
           </label>
-          <Input
-            id="email"
+          <input
             type="email"
-            placeholder="you@company.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             onBlur={() => setEmailTouched(true)}
+            placeholder="user@enterprise.com"
             required
             autoComplete="email"
-            className={
-              emailError
-                ? "border-red-400 focus-visible:ring-red-200"
-                : undefined
-            }
+            className="w-full rounded-[12px] border border-white/[0.08] bg-[#1f2a3d] px-4 py-3 text-[14px] text-white/95 placeholder:text-white/25 outline-none transition-all focus:border-[#2563eb] focus:ring-4 focus:ring-[rgba(37,99,235,0.2)]"
           />
           {emailError !== null && (
-            <p className="text-[11.5px] text-red-500">{emailError}</p>
+            <p className="font-grotesk text-[11px] text-[#ef4444]">{emailError}</p>
           )}
         </div>
 
-        <div className="space-y-1.5">
-          <label
-            htmlFor="password"
-            className="block font-mono text-[10.5px] font-semibold uppercase tracking-wider text-slate-500"
-          >
-            Password
-          </label>
-          <Input
-            id="password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="current-password"
-          />
-          <div className="flex justify-end">
+        {/* Password */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="font-grotesk block text-[11px] uppercase tracking-widest text-white/30">
+              Access Key
+            </label>
             <Link
               href="/forgot-password"
-              className="text-sm text-blue-600 hover:underline"
+              className="font-grotesk text-[11px] uppercase tracking-widest text-[#2563eb] hover:text-[#3b82f6] transition-colors"
             >
-              Forgot password?
+              Forgot Password?
             </Link>
           </div>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            required
+            autoComplete="current-password"
+            className="w-full rounded-[12px] border border-white/[0.08] bg-[#1f2a3d] px-4 py-3 text-[14px] text-white/95 placeholder:text-white/25 outline-none transition-all focus:border-[#2563eb] focus:ring-4 focus:ring-[rgba(37,99,235,0.2)]"
+          />
         </div>
 
+        {/* Remember session */}
+        <label className="flex cursor-pointer items-center gap-2.5">
+          <input
+            type="checkbox"
+            checked={remember}
+            onChange={(e) => setRemember(e.target.checked)}
+            className="h-3.5 w-3.5 rounded border-white/20 bg-[#1f2a3d] accent-[#2563eb]"
+          />
+          <span className="font-grotesk text-[11px] uppercase tracking-widest text-white/30">
+            Remember Terminal Session
+          </span>
+        </label>
+
         {error !== null && (
-          <p className="rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-[12.5px] text-red-600">
+          <p className="rounded-[12px] border border-[#ef4444]/25 bg-[#ef4444]/10 px-4 py-3 text-[12.5px] text-[#ef4444]">
             {error}
           </p>
         )}
 
-        <Button
+        <button
           type="submit"
-          size="lg"
-          className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800"
           disabled={isLoading || !isFormValid}
+          className="font-grotesk w-full rounded-[12px] bg-[#2563eb] py-3.5 text-[13px] font-semibold uppercase tracking-widest text-white transition-colors hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <span className="flex items-center justify-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
               Signing in…
-            </>
+            </span>
           ) : (
-            "Sign in"
+            "Sign In"
           )}
-        </Button>
+        </button>
       </form>
 
-      <p className="mt-5 text-center text-[13px] text-slate-400">
+      <div className="my-6 border-t border-white/[0.08]" />
+
+      <p className="text-center text-[13px] text-white/45">
         Don&apos;t have an account?{" "}
         <Link
           href="/signup"
-          className="font-medium text-blue-600 hover:text-blue-700"
+          className="font-medium text-[#2563eb] hover:text-[#3b82f6] transition-colors"
         >
-          Sign up
+          Request Access
         </Link>
       </p>
     </div>
@@ -216,16 +220,39 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="flex h-screen">
-      {/* ── Left: form ─────────────────────────────────────────────── */}
-      <div className="flex w-full flex-col items-center justify-center bg-white px-6 sm:px-8 lg:w-[60%]">
-        <Suspense fallback={null}>
-          <LoginForm />
-        </Suspense>
+    <div className="flex h-screen flex-col bg-[#071325]" style={{ backgroundImage: "radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)", backgroundSize: "24px 24px" }}>
+      {/* Top nav bar */}
+      <nav className="flex h-12 shrink-0 items-center justify-between border-b border-white/[0.08] px-6 sm:px-8">
+        <div className="flex items-center gap-2">
+          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#2563eb]">
+            <span className="font-grotesk text-[9px] font-bold text-white">DQ</span>
+          </div>
+          <span className="font-grotesk text-[14px] font-bold text-white">DISTROIQ</span>
+        </div>
+        <span className="font-grotesk text-[11px] uppercase tracking-widest text-white/30">
+          ● Secure Session · TLS 1.5
+        </span>
+      </nav>
+
+      {/* Main content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left panel */}
+        <div className="flex w-full flex-col items-start justify-center px-8 sm:px-12 lg:w-[55%] lg:px-16">
+          <Suspense fallback={null}>
+            <LoginForm />
+          </Suspense>
+        </div>
+
+        {/* Right panel */}
+        <RightPanel />
       </div>
 
-      {/* ── Right: branding ────────────────────────────────────────── */}
-      <RightPanel />
+      {/* Footer */}
+      <footer className="shrink-0 border-t border-white/[0.08] px-6 py-3 sm:px-8">
+        <p className="font-grotesk text-[10px] uppercase tracking-widest text-white/25">
+          © 2026 DistroIQ Kinetic Precision · Privacy · Terms · Node: US-EAST-01
+        </p>
+      </footer>
     </div>
   );
 }

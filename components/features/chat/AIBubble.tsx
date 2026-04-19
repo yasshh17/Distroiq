@@ -6,7 +6,10 @@ interface AIBubbleProps {
 
 export function AIBubble({ children }: AIBubbleProps) {
   return (
-    <div className="max-w-[90%] rounded-lg rounded-tl-sm border border-slate-200 bg-white px-4 py-3 text-[13.5px] leading-relaxed text-slate-700 shadow-sm sm:max-w-[88%]">
+    <div
+      className="w-full border border-white/[0.08] bg-[#1f2a3d] px-4 py-3 text-[13.5px] leading-relaxed"
+      style={{ borderRadius: "2px 12px 12px 12px" }}
+    >
       {children}
     </div>
   );

@@ -21,38 +21,27 @@ const TIER_MAP: Record<string, Tier> = {
   "IN TRANSIT": "blue",
 };
 
-const TIER_STYLES: Record<Tier, { badge: string; dot: string }> = {
-  red: {
-    badge: "text-red-600 bg-red-50 border-red-200",
-    dot: "bg-red-500",
-  },
-  amber: {
-    badge: "text-amber-600 bg-amber-50 border-amber-200",
-    dot: "bg-amber-400",
-  },
-  green: {
-    badge: "text-emerald-600 bg-emerald-50 border-emerald-200",
-    dot: "bg-emerald-400",
-  },
-  blue: {
-    badge: "text-blue-600 bg-blue-50 border-blue-200",
-    dot: "bg-blue-400",
-  },
-  default: {
-    badge: "text-slate-600 bg-slate-50 border-slate-200",
-    dot: "bg-slate-400",
-  },
+const TIER_COLORS: Record<Tier, { text: string; bg: string; dot: string }> = {
+  red: { text: "#ef4444", bg: "rgba(239,68,68,0.15)", dot: "#ef4444" },
+  amber: { text: "#f59e0b", bg: "rgba(245,158,11,0.15)", dot: "#f59e0b" },
+  green: { text: "#22c55e", bg: "rgba(34,197,94,0.15)", dot: "#22c55e" },
+  blue: { text: "#3b82f6", bg: "rgba(59,130,246,0.15)", dot: "#3b82f6" },
+  default: { text: "rgba(255,255,255,0.5)", bg: "rgba(255,255,255,0.08)", dot: "rgba(255,255,255,0.4)" },
 };
 
 export function StatusBadge({ status }: StatusBadgeProps) {
   const tier = TIER_MAP[status.toUpperCase()] ?? "default";
-  const styles = TIER_STYLES[tier];
+  const colors = TIER_COLORS[tier];
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded border px-1.5 py-0.5 font-mono text-[10.5px] font-medium uppercase tracking-wide ${styles.badge}`}
+      className="font-grotesk inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide"
+      style={{ borderRadius: "6px", color: colors.text, backgroundColor: colors.bg }}
     >
-      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${styles.dot}`} />
+      <span
+        className="h-1.5 w-1.5 shrink-0 rounded-full"
+        style={{ backgroundColor: colors.dot }}
+      />
       {status}
     </span>
   );

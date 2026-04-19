@@ -1,72 +1,152 @@
-const CARDS = [
+"use client";
+
+import { Package, ClipboardList, Users, Zap } from "lucide-react";
+import { useChatStore } from "@/stores/chat";
+
+const MODULES = [
   {
-    label: "INVENTORY",
-    labelStyle: "text-blue-500 bg-blue-500/8 border-blue-500/20",
-    query: "Check stock levels across all warehouses",
+    number: "01",
+    icon: Package,
+    title: "Inventory\nIntelligence",
+    desc: "Real-time stock monitoring across all distribution nodes.",
+    query: "Low stock SKUs",
   },
   {
-    label: "ORDERS",
-    labelStyle: "text-violet-500 bg-violet-500/8 border-violet-500/20",
-    query: "View pending and delayed shipments",
+    number: "02",
+    icon: ClipboardList,
+    title: "Order\nOrchestration",
+    desc: "Track, prioritize, and resolve order fulfillment issues.",
+    query: "Pending orders > 48h",
   },
   {
-    label: "CUSTOMERS",
-    labelStyle: "text-emerald-600 bg-emerald-500/8 border-emerald-500/20",
-    query: "Analyze top customer purchase patterns",
+    number: "03",
+    icon: Users,
+    title: "Customer\nInsights",
+    desc: "Purchase patterns, account health, and engagement analytics.",
+    query: "Customer order history",
   },
   {
-    label: "ACTIONS",
-    labelStyle: "text-amber-600 bg-amber-500/8 border-amber-500/20",
-    query: "Trigger bulk reorder for low-stock items",
+    number: "04",
+    icon: Zap,
+    title: "Automated\nActions",
+    desc: "Trigger reorders, alerts, and operational workflows via AI.",
+    query: "Reorder recommendations",
   },
 ] as const;
 
-const CARD_DELAYS = ["[animation-delay:60ms]", "[animation-delay:120ms]", "[animation-delay:180ms]", "[animation-delay:240ms]"];
+const ACTIVITY = [
+  {
+    time: "14:21:45",
+    event: "SKU-4821 dropped below reorder threshold",
+    source: "Warehouse ERP",
+  },
+  {
+    time: "14:19:12",
+    event: "Order ORD-8821 delayed past ETA",
+    source: "Order Management",
+  },
+  {
+    time: "14:15:03",
+    event: "Supplier V-99 response rate flagged",
+    source: "Supplier Portal",
+  },
+];
+
+function getUtcTime(): string {
+  return new Date().toISOString().replace("T", " ").substring(0, 19) + " UTC";
+}
 
 export function WelcomeScreen() {
+  const sendMessage = useChatStore((s) => s.sendMessage);
+  const isStreaming = useChatStore((s) => s.isStreaming);
+
   return (
-    <div className="flex flex-col items-center py-12 text-center animate-in fade-in-0 slide-in-from-bottom-3 duration-500">
-      {/* DQ icon tile */}
-      <div
-        className="flex h-[52px] w-[52px] items-center justify-center rounded-2xl bg-blue-600"
-        style={{
-          boxShadow:
-            "0 0 0 6px rgba(37,99,235,0.10), 0 8px 28px rgba(37,99,235,0.30)",
-        }}
-      >
-        <span className="font-mono text-[15px] font-bold tracking-tight text-white">DQ</span>
+    <div className="py-8 animate-in fade-in-0 slide-in-from-bottom-3 duration-500">
+      {/* Welcome banner */}
+      <div className="flex items-center gap-2.5">
+        <span className="h-1.5 w-1.5 rounded-full bg-[#22c55e]" style={{ animation: "breathe 2s ease-in-out infinite" }} />
+        <span className="font-grotesk text-[13px] uppercase tracking-wider text-[#22c55e]">
+          Welcome, Operator — System Nominal
+        </span>
       </div>
-
-      {/* Heading */}
-      <h1 className="mt-5 text-[26px] font-semibold tracking-tight text-slate-800">
-        DistroIQ
-      </h1>
-
-      {/* Subtitle */}
-      <p className="mt-2 max-w-[340px] text-[13px] leading-relaxed text-slate-400">
-        AI Operations Assistant · Ask anything about inventory, orders, customers, or
-        suppliers
+      <p className="font-grotesk mt-1 text-[11px] text-white/40">
+        SESSION: IQ-921-X · TIMESTAMP: {getUtcTime()}
       </p>
 
-      {/* 1-col on mobile → 2-col on sm+ */}
-      <div className="mt-8 grid w-full max-w-full grid-cols-1 gap-3 sm:max-w-[400px] sm:grid-cols-2">
-        {CARDS.map((card, i) => (
+      {/* Module cards */}
+      <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {MODULES.map((mod) => (
           <button
-            key={card.label}
-            className={`group flex flex-col items-start gap-2 rounded-xl border border-slate-200 bg-white p-3.5 text-left shadow-sm transition-all hover:border-slate-300 hover:shadow-md active:scale-[0.98] animate-in fade-in-0 slide-in-from-bottom-2 duration-500 fill-mode-both ${CARD_DELAYS[i]}`}
+            key={mod.number}
+            disabled={isStreaming}
+            onClick={() => sendMessage(mod.query)}
+            className="group flex flex-col gap-3 rounded-[12px] border border-white/[0.08] bg-[#1f2a3d] p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-[rgba(37,99,235,0.6)] disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <span
-              className={`rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider ${card.labelStyle}`}
+            <div className="flex items-start justify-between">
+              <span className="font-grotesk text-[11px] uppercase tracking-widest text-white/30">
+                Module {mod.number}
+              </span>
+              <mod.icon className="h-4 w-4 text-white/20 transition-colors group-hover:text-[#2563eb]/40" />
+            </div>
+            <h3
+              className="whitespace-pre-line text-[24px] font-light leading-tight text-white/95"
+              style={{ fontFamily: "'Inter', sans-serif" }}
             >
-              {card.label}
+              {mod.title}
+            </h3>
+            <p className="text-[12.5px] leading-snug text-white/50">{mod.desc}</p>
+            <span
+              className="font-grotesk mt-1 text-[12px] font-medium uppercase text-[#2563eb] transition-opacity group-hover:opacity-80"
+              style={{ letterSpacing: "0.05em" }}
+            >
+              INITIALIZE NODE ›
             </span>
-            <p className="text-[12.5px] leading-snug text-slate-600 group-hover:text-slate-800">
-              {card.query}
-            </p>
           </button>
         ))}
       </div>
 
+      {/* Stats bar */}
+      <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-[12px] border border-white/[0.08] bg-[#101c2e] px-4 py-3">
+        <span className="font-grotesk flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-[#22c55e]">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#22c55e]" />
+          5 Sources Active
+        </span>
+        <span className="font-grotesk text-[11px] uppercase tracking-wide text-white/40">
+          · 42,891 Total SKUs
+        </span>
+        <span className="font-grotesk text-[11px] uppercase tracking-wide text-white/40">
+          · 1,204 Open Orders
+        </span>
+        <span className="font-grotesk text-[11px] uppercase tracking-wide text-white/40">
+          · 8,552 Customers
+        </span>
+        <span className="font-grotesk ml-auto text-[10px] text-white/25">
+          Last Sync: {getUtcTime()}
+        </span>
+      </div>
+
+      {/* Recent activity */}
+      <div className="mt-4">
+        <p className="font-grotesk mb-2 text-[10px] uppercase tracking-widest text-white/30">
+          Recent Activity
+        </p>
+        <div className="space-y-px">
+          {ACTIVITY.map((item, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-3 rounded-[8px] px-3 py-2 transition-colors hover:bg-[#1f2a3d]/60"
+            >
+              <span className="font-grotesk shrink-0 text-[10px] tabular-nums text-white/25">
+                {item.time}
+              </span>
+              <span className="flex-1 text-[12px] text-white/55">{item.event}</span>
+              <span className="font-grotesk shrink-0 rounded border border-white/[0.08] bg-[#1f2a3d] px-2 py-0.5 text-[10px] uppercase text-white/30">
+                {item.source}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

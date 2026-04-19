@@ -7,7 +7,7 @@ import {
   type KeyboardEvent,
   type FormEvent,
 } from "react";
-import { Send } from "lucide-react";
+import { Zap, ArrowUp } from "lucide-react";
 
 import { useChatStore } from "@/stores/chat";
 import { WelcomeScreen } from "@/components/features/chat/WelcomeScreen";
@@ -18,39 +18,17 @@ import { DataTable } from "@/components/features/chat/DataTable";
 import { AlertBanner } from "@/components/features/chat/AlertBanner";
 import { EmailCard } from "@/components/features/chat/EmailCard";
 import { SourceCitation } from "@/components/features/chat/SourceCitation";
-import type { ChatComponent, FilterTab } from "@/types";
-
-const TABS: FilterTab[] = [
-  "All",
-  "Inventory",
-  "Orders",
-  "Customers",
-  "Suppliers",
-  "Actions",
-];
-
-// ── Component renderer ────────────────────────────────────────────────
+import type { ChatComponent } from "@/types";
 
 function renderComponent(c: ChatComponent, i: number) {
   if (c.type === "table") {
-    return (
-      <DataTable
-        key={i}
-        headers={c.headers}
-        rows={c.rows}
-        statusCol={c.statusCol}
-      />
-    );
+    return <DataTable key={i} headers={c.headers} rows={c.rows} statusCol={c.statusCol} />;
   }
   if (c.type === "alert") {
-    return (
-      <AlertBanner key={i} type={c.alertType} title={c.title} message={c.message} />
-    );
+    return <AlertBanner key={i} type={c.alertType} title={c.title} message={c.message} />;
   }
   if (c.type === "email") {
-    return (
-      <EmailCard key={i} to={c.to} cc={c.cc} subject={c.subject} body={c.body} />
-    );
+    return <EmailCard key={i} to={c.to} cc={c.cc} subject={c.subject} body={c.body} />;
   }
   if (c.type === "citation") {
     return <SourceCitation key={i} sources={c.sources} />;
@@ -58,54 +36,19 @@ function renderComponent(c: ChatComponent, i: number) {
   return null;
 }
 
-// ── Session timer ─────────────────────────────────────────────────────
-
-function useSessionTimer(sessionStart: number | null) {
-  const [elapsed, setElapsed] = useState("00:00:00");
-
-  useEffect(() => {
-    if (sessionStart === null) {
-      setElapsed("00:00:00");
-      return;
-    }
-
-    const tick = () => {
-      const s = Math.floor((Date.now() - sessionStart) / 1000);
-      const hh = String(Math.floor(s / 3600)).padStart(2, "0");
-      const mm = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
-      const ss = String(s % 60).padStart(2, "0");
-      setElapsed(`${hh}:${mm}:${ss}`);
-    };
-
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [sessionStart]);
-
-  return elapsed;
-}
-
-// ── Page ──────────────────────────────────────────────────────────────
-
 export default function DashboardPage() {
   const messages = useChatStore((s) => s.messages);
-  const activeTab = useChatStore((s) => s.activeTab);
   const isStreaming = useChatStore((s) => s.isStreaming);
-  const sessionStart = useChatStore((s) => s.sessionStart);
-  const setActiveTab = useChatStore((s) => s.setActiveTab);
   const sendMessage = useChatStore((s) => s.sendMessage);
 
   const [draft, setDraft] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const elapsed = useSessionTimer(sessionStart);
 
-  // Auto-scroll to bottom when messages change
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Auto-resize textarea
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -136,79 +79,45 @@ export default function DashboardPage() {
 
   return (
     <>
-      {/* ── Toolbar ──────────────────────────────────────────────── */}
-      <div className="flex h-[50px] shrink-0 items-center gap-2 border-b border-slate-200 bg-white px-4">
-        {/* Tabs — horizontally scrollable on mobile, no visible scrollbar */}
-        <div className="relative min-w-0 flex-1">
-          <div className="no-scrollbar flex items-center gap-0.5 overflow-x-auto">
-            {TABS.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`shrink-0 rounded-md px-3 py-1.5 text-[12.5px] font-medium transition-colors ${
-                  tab === activeTab
-                    ? "bg-slate-900 text-white"
-                    : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-          {/* Fade hint — visible on mobile only */}
-          <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-white to-transparent lg:hidden" />
-        </div>
-        <div className="hidden shrink-0 items-center gap-2 lg:flex">
-          <span
-            className={`h-1.5 w-1.5 rounded-full transition-colors ${
-              isStreaming ? "animate-pulse bg-blue-400" : "bg-emerald-400"
-            }`}
-          />
-          <span className="font-mono text-[11px] text-slate-400">
-            Session · {elapsed}
-          </span>
-        </div>
-      </div>
-
       {/* ── Message area ─────────────────────────────────────────── */}
       <div className="flex flex-1 flex-col overflow-y-auto">
-        <div className="mx-auto w-full max-w-3xl flex-1 px-3 sm:px-6">
+        <div className="mx-auto w-full max-w-3xl flex-1 px-4 sm:px-6">
           {!hasMessages ? (
             <WelcomeScreen />
           ) : (
-            <div className="space-y-5 py-6">
+            <div className="space-y-6 py-6">
               {messages.map((msg) => {
                 if (msg.role === "user") {
                   return (
                     <MessageRow
                       key={msg.id}
                       role="user"
-                      timestamp={new Date(msg.timestamp).toLocaleTimeString(
-                        [],
-                        { hour: "2-digit", minute: "2-digit" },
-                      )}
+                      timestamp={new Date(msg.timestamp).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     >
                       <UserBubble>{msg.content}</UserBubble>
                     </MessageRow>
                   );
                 }
 
-                // Streaming placeholder — no content yet
+                /* Skeleton while waiting for first token */
                 if (msg.isStreaming && !msg.content) {
                   return (
                     <MessageRow key={msg.id} role="ai">
                       <AIBubble>
                         <div className="space-y-2.5 py-0.5">
-                          <div className="h-2.5 w-[85%] animate-pulse rounded-full bg-slate-200" />
-                          <div className="h-2.5 w-[65%] animate-pulse rounded-full bg-slate-200" />
-                          <div className="h-2.5 w-[75%] animate-pulse rounded-full bg-slate-200" />
+                          <div className="h-2.5 w-[85%] animate-pulse rounded-full bg-white/[0.08]" />
+                          <div className="h-2.5 w-[65%] animate-pulse rounded-full bg-white/[0.08]" />
+                          <div className="h-2.5 w-[75%] animate-pulse rounded-full bg-white/[0.08]" />
                         </div>
                       </AIBubble>
                     </MessageRow>
                   );
                 }
 
-                // Error state
+                /* Error state */
                 if (msg.isError) {
                   const lastUserMsg = messages
                     .slice(0, messages.indexOf(msg))
@@ -225,7 +134,7 @@ export default function DashboardPage() {
                         {lastUserMsg && (
                           <button
                             onClick={() => sendMessage(lastUserMsg.content)}
-                            className="self-start rounded-md border border-slate-200 bg-white px-3 py-1.5 font-mono text-[11px] font-medium text-slate-600 shadow-sm transition-colors hover:border-blue-300 hover:text-blue-600"
+                            className="font-grotesk self-start rounded-[8px] border border-white/[0.08] bg-[#1f2a3d] px-3 py-1.5 text-[11px] font-medium uppercase tracking-wide text-white/50 transition-colors hover:border-[#2563eb]/40 hover:text-[#2563eb]"
                           >
                             Retry
                           </button>
@@ -246,16 +155,15 @@ export default function DashboardPage() {
                   >
                     <AIBubble>
                       {msg.isStreaming ? (
-                        // ONLY show dots while streaming — never raw content
-                        <div className="flex items-center gap-1 py-1">
-                          <div className="h-2 w-2 rounded-full bg-slate-300 animate-bounce [animation-delay:-0.3s]" />
-                          <div className="h-2 w-2 rounded-full bg-slate-300 animate-bounce [animation-delay:-0.15s]" />
-                          <div className="h-2 w-2 rounded-full bg-slate-300 animate-bounce" />
+                        <div className="flex items-center gap-1.5 py-1">
+                          <div className="h-2 w-2 rounded-full bg-[#2563eb]/60" style={{ animation: "bounce-dot 1.3s ease-in-out infinite 0s" }} />
+                          <div className="h-2 w-2 rounded-full bg-[#2563eb]/60" style={{ animation: "bounce-dot 1.3s ease-in-out infinite 0.15s" }} />
+                          <div className="h-2 w-2 rounded-full bg-[#2563eb]/60" style={{ animation: "bounce-dot 1.3s ease-in-out infinite 0.3s" }} />
                         </div>
                       ) : msg.parsedContent ? (
                         <>
                           {msg.parsedContent.text && (
-                            <p className="whitespace-pre-wrap leading-relaxed">
+                            <p className="whitespace-pre-wrap leading-relaxed text-white/90">
                               {msg.parsedContent.text}
                             </p>
                           )}
@@ -264,7 +172,7 @@ export default function DashboardPage() {
                           )}
                         </>
                       ) : (
-                        <p className="whitespace-pre-wrap">{msg.content}</p>
+                        <p className="whitespace-pre-wrap text-white/90">{msg.content}</p>
                       )}
                     </AIBubble>
                   </MessageRow>
@@ -277,31 +185,48 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Input bar ────────────────────────────────────────────── */}
-      <div className="shrink-0 bg-white px-3 pb-4 pt-3 shadow-[0_-1px_0_0_rgb(226,232,240)] sm:px-4">
+      <div
+        className="shrink-0 border-t border-white/[0.08] bg-[#101c2e] px-5 py-3"
+        style={{ boxShadow: "0 -4px 24px rgba(37,99,235,0.04)" }}
+      >
         <div className="mx-auto max-w-3xl">
-          <form
-            onSubmit={handleSubmit}
-            className="flex items-end gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 transition-all focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100"
-          >
-            <textarea
-              ref={textareaRef}
-              rows={1}
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask about inventory, orders, suppliers, customers…"
-              className="flex-1 resize-none bg-transparent text-[13.5px] leading-relaxed text-slate-700 placeholder:text-slate-400 focus:outline-none"
-              disabled={isStreaming}
-            />
-            <button
-              type="submit"
-              disabled={!draft.trim() || isStreaming}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-600 shadow-sm transition-colors hover:bg-blue-700 active:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-40"
+          <form onSubmit={handleSubmit}>
+            {/* Input field wrapper */}
+            <div
+              className="input-glow-wrapper flex items-center gap-3 rounded-[12px] border border-white/[0.08] bg-[#1f2a3d] px-4 py-3 transition-all duration-150"
+              style={
+                {
+                  "--glow-border": "var(--kp-accent)",
+                  "--glow-shadow": "var(--kp-accent-glow)",
+                } as React.CSSProperties
+              }
             >
-              <Send className="h-3.5 w-3.5 text-white" />
-            </button>
+              <Zap className="h-4 w-4 shrink-0 text-[#2563eb]" />
+              <textarea
+                ref={textareaRef}
+                rows={1}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask DistroIQ..."
+                disabled={isStreaming}
+                className="font-grotesk flex-1 resize-none bg-transparent text-[14px] leading-relaxed text-white/95 placeholder:text-white/30 focus:outline-none disabled:cursor-not-allowed"
+              />
+              <div className="flex shrink-0 items-center gap-2.5">
+                <span className="font-grotesk hidden rounded border border-white/[0.08] bg-[#2a3548] px-2 py-[3px] text-[10px] uppercase tracking-wide text-white/30 sm:inline">
+                  CMD+K
+                </span>
+                <button
+                  type="submit"
+                  disabled={!draft.trim() || isStreaming}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#2563eb] transition-colors hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <ArrowUp className="h-4 w-4 text-white" />
+                </button>
+              </div>
+            </div>
           </form>
-          <p className="text-xs text-slate-400 font-mono text-center py-2">
+          <p className="font-grotesk mt-1.5 text-center text-[10px] uppercase tracking-widest text-white/20">
             RAG-powered · Responses grounded in live operational data
           </p>
         </div>
