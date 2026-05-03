@@ -15,6 +15,7 @@ the browser:
 RAG retrieval and DB persistence are wired in on Day 3.
 """
 
+import asyncio
 import json
 from collections.abc import AsyncGenerator
 
@@ -86,6 +87,7 @@ _llm = ChatAnthropic(
     model=settings.ANTHROPIC_MODEL,
     api_key=settings.ANTHROPIC_API_KEY,
     streaming=True,
+    max_retries=0,  # fail fast — retries would triple the hang time silently
 )
 
 
@@ -104,23 +106,27 @@ async def stream_chat(message: str, user_id: str) -> AsyncGenerator[str, None]:
     ]
 
     try:
-        async for chunk in _llm.astream(messages):
-            # chunk.content is str for simple text, list for multi-part
-            raw = chunk.content
-            if isinstance(raw, str):
-                text = raw
-            elif isinstance(raw, list):
-                text = "".join(
-                    block.get("text", "") if isinstance(block, dict) else str(block)
-                    for block in raw
-                )
-            else:
-                continue
+        async with asyncio.timeout(45):
+            async for chunk in _llm.astream(messages):
+                # chunk.content is str for simple text, list for multi-part
+                raw = chunk.content
+                if isinstance(raw, str):
+                    text = raw
+                elif isinstance(raw, list):
+                    text = "".join(
+                        block.get("text", "") if isinstance(block, dict) else str(block)
+                        for block in raw
+                    )
+                else:
+                    continue
 
-            if text:
-                yield f"data: {json.dumps({'type': 'delta', 'content': text})}\n\n"
+                if text:
+                    yield f"data: {json.dumps({'type': 'delta', 'content': text})}\n\n"
 
-        yield f"data: {json.dumps({'type': 'done'})}\n\n"
-
+    except asyncio.TimeoutError:
+        yield f"data: {json.dumps({'type': 'error', 'message': 'Response timed out — please try again.'})}\n\n"
     except Exception as exc:  # noqa: BLE001
         yield f"data: {json.dumps({'type': 'error', 'message': str(exc)})}\n\n"
+    finally:
+        # Guaranteed: done is always the last event, regardless of how the stream ended.
+        yield f"data: {json.dumps({'type': 'done'})}\n\n"

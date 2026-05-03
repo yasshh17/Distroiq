@@ -102,21 +102,6 @@ export default function DashboardPage() {
                   );
                 }
 
-                /* Skeleton while waiting for first token */
-                if (msg.isStreaming && !msg.content) {
-                  return (
-                    <MessageRow key={msg.id} role="ai">
-                      <AIBubble>
-                        <div className="space-y-2.5 py-0.5">
-                          <div className="h-2.5 w-[85%] animate-pulse rounded-full bg-white/[0.08]" />
-                          <div className="h-2.5 w-[65%] animate-pulse rounded-full bg-white/[0.08]" />
-                          <div className="h-2.5 w-[75%] animate-pulse rounded-full bg-white/[0.08]" />
-                        </div>
-                      </AIBubble>
-                    </MessageRow>
-                  );
-                }
-
                 /* Error state */
                 if (msg.isError) {
                   const lastUserMsg = messages

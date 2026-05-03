@@ -21,7 +21,7 @@ interface DoneEvent {
 
 interface ErrorEvent {
   type: "error";
-  content: string;
+  message: string;
 }
 
 type StreamEvent = DeltaEvent | ComponentEvent | DoneEvent | ErrorEvent;
@@ -110,99 +110,148 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       const decoder = new TextDecoder();
       let buffer = "";
 
-      outer: while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      // Inner try/finally guarantees the reader is always released, regardless of
+      // how the loop exits (break outer, reader exhausted, or thrown error).
+      // Without this, the browser keeps the connection locked between queries —
+      // on HTTP/1.1 backends this blocks the second request from ever starting.
+      try {
+        outer: while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() ?? "";
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
 
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
-          const raw = line.slice(6).trim();
-          if (!raw) continue;
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            const raw = line.slice(6).trim();
+            if (!raw) continue;
 
-          let event: StreamEvent;
-          try {
-            event = JSON.parse(raw) as StreamEvent;
-          } catch {
-            continue;
-          }
-
-          if (event.type === "delta") {
-            set((s) => ({
-              messages: s.messages.map((m) =>
-                m.id === assistantId
-                  ? { ...m, content: m.content + event.content }
-                  : m,
-              ),
-            }));
-          } else if (event.type === "component") {
-            set((s) => ({
-              messages: s.messages.map((m) =>
-                m.id === assistantId
-                  ? { ...m, components: [...m.components, event.component] }
-                  : m,
-              ),
-            }));
-          } else if (event.type === "done") {
-            const raw =
-              get().messages.find((m) => m.id === assistantId)?.content ?? "";
-
-            // Try to extract JSON from anywhere in the response.
-            // Claude sometimes outputs prose before the JSON block.
-            let parsed: Record<string, unknown> | null = null;
-
-            // First try: direct parse (clean JSON response)
+            let event: StreamEvent;
             try {
-              const clean = raw
-                .replace(/^```json\s*/i, "")
-                .replace(/```\s*$/, "")
-                .trim();
-              const candidate = JSON.parse(clean) as Record<string, unknown>;
-              if (candidate.text !== undefined) parsed = candidate;
-            } catch {}
-
-            // Second try: extract JSON block from mixed content
-            if (!parsed) {
-              const jsonMatch =
-                raw.match(/```json\s*([\s\S]*?)```/i) ??
-                raw.match(/(\{[\s\S]*"text"[\s\S]*"components"[\s\S]*\})/);
-              if (jsonMatch) {
-                try {
-                  const candidate = JSON.parse(jsonMatch[1]) as Record<string, unknown>;
-                  if (candidate.text !== undefined) parsed = candidate;
-                } catch {}
-              }
+              event = JSON.parse(raw) as StreamEvent;
+            } catch {
+              continue;
             }
 
-            if (parsed) {
+            if (event.type === "delta") {
               set((s) => ({
                 messages: s.messages.map((m) =>
                   m.id === assistantId
-                    ? {
-                        ...m,
-                        isStreaming: false,
-                        parsedContent: parsed as unknown as ParsedContent,
-                      }
+                    ? { ...m, content: m.content + event.content }
                     : m,
                 ),
-                isStreaming: false,
               }));
-            } else {
+            } else if (event.type === "component") {
               set((s) => ({
                 messages: s.messages.map((m) =>
-                  m.id === assistantId ? { ...m, isStreaming: false } : m,
+                  m.id === assistantId
+                    ? { ...m, components: [...m.components, event.component] }
+                    : m,
                 ),
-                isStreaming: false,
               }));
+            } else if (event.type === "done") {
+              const accumulated =
+                get().messages.find((m) => m.id === assistantId)?.content ?? "";
+
+              // Try to extract JSON from anywhere in the response.
+              // Claude sometimes outputs prose before the JSON block.
+              let parsed: Record<string, unknown> | null = null;
+
+              // First try: direct parse (clean JSON response)
+              try {
+                const clean = accumulated
+                  .replace(/^```json\s*/i, "")
+                  .replace(/```\s*$/, "")
+                  .trim();
+                const candidate = JSON.parse(clean) as Record<string, unknown>;
+                if (candidate.text !== undefined) parsed = candidate;
+              } catch {}
+
+              // Second try: extract JSON block from mixed content
+              if (!parsed) {
+                const jsonMatch =
+                  accumulated.match(/```json\s*([\s\S]*?)```/i) ??
+                  accumulated.match(/(\{[\s\S]*"text"[\s\S]*"components"[\s\S]*\})/);
+                if (jsonMatch) {
+                  try {
+                    const candidate = JSON.parse(jsonMatch[1]) as Record<string, unknown>;
+                    if (candidate.text !== undefined) parsed = candidate;
+                  } catch {}
+                }
+              }
+
+              if (parsed) {
+                // Normalize: if parsed.text is empty, fall back to the raw accumulated content
+                const finalText =
+                  typeof parsed.text === "string" && parsed.text.trim()
+                    ? parsed.text
+                    : accumulated;
+                const finalComponents = Array.isArray(parsed.components)
+                  ? (parsed.components as ChatComponent[])
+                  : [];
+                set((s) => ({
+                  messages: s.messages.map((m) =>
+                    m.id === assistantId
+                      ? {
+                          ...m,
+                          isStreaming: false,
+                          parsedContent: { text: finalText, components: finalComponents },
+                        }
+                      : m,
+                  ),
+                  isStreaming: false,
+                }));
+              } else {
+                // JSON parsing failed — wrap the raw content so the bubble never renders blank
+                set((s) => ({
+                  messages: s.messages.map((m) =>
+                    m.id === assistantId
+                      ? {
+                          ...m,
+                          isStreaming: false,
+                          ...(accumulated
+                            ? { parsedContent: { text: accumulated, components: [] } }
+                            : {}),
+                        }
+                      : m,
+                  ),
+                  isStreaming: false,
+                }));
+              }
+              break outer;
+            } else if (event.type === "error") {
+              throw new Error(event.message ?? "Stream error");
             }
-            break outer;
-          } else if (event.type === "error") {
-            throw new Error(event.content ?? "Stream error");
           }
         }
+
+        // Safety net: if the stream closed without a done event, reset isStreaming.
+        // Uses get() for fresh state — assistantId is from the current call's closure.
+        const stillStreaming = get().messages.find((m) => m.id === assistantId)?.isStreaming;
+        if (stillStreaming) {
+          const fallbackContent =
+            get().messages.find((m) => m.id === assistantId)?.content ?? "";
+          set((s) => ({
+            messages: s.messages.map((m) =>
+              m.id === assistantId
+                ? {
+                    ...m,
+                    isStreaming: false,
+                    ...(fallbackContent
+                      ? { parsedContent: { text: fallbackContent, components: [] } }
+                      : {}),
+                  }
+                : m,
+            ),
+            isStreaming: false,
+          }));
+        }
+      } finally {
+        // Release the reader unconditionally so the browser can close/reuse
+        // the connection before the next sendMessage call begins.
+        void reader.cancel();
       }
     } catch {
       set((s) => ({
