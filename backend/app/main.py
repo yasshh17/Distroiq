@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.database import engine
+from app.core.redis import init_redis, close_redis
 from app.api.v1.routes import health, chat, auth, files
 
 logger = logging.getLogger(__name__)
@@ -16,12 +17,21 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
-    """Start up the app; dispose the DB engine pool on shutdown."""
+    """Start up the app; dispose the DB engine pool and Redis on shutdown."""
     logger.info("DistroIQ API starting up")
+
+    # Initialize Redis connection
+    try:
+        await init_redis()
+        logger.info("Redis initialized successfully")
+    except Exception as exc:
+        logger.error(f"Failed to initialize Redis: {exc}")
+        # Continue startup even if Redis fails (for development)
 
     yield
 
     logger.info("DistroIQ API shutting down")
+    await close_redis()
     await engine.dispose()
 
 
@@ -42,7 +52,12 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL],
+    allow_origins=[
+        settings.FRONTEND_URL,
+        "http://localhost:3000",
+        "https://distroiq.vercel.app",
+        "https://*.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

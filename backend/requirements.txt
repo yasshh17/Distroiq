@@ -13,6 +13,7 @@ pgvector>=0.3.0                # pgvector SQLAlchemy / psycopg integration
 pydantic>=2.7.0
 pydantic-settings>=2.3.0
 email-validator>=2.1.0         # required for pydantic EmailStr
+python-dotenv>=1.0.0           # .env file loading
 
 # ── Auth / security ───────────────────────────────────────────────────
 python-jose[cryptography]>=3.3.0
