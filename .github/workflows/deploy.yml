@@ -7,6 +7,9 @@ name: Deploy
 # backend service after a push to main.
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['backend/**']
 
 # Only one deploy at a time; cancel the in-progress run if a new commit lands.
 concurrency:
