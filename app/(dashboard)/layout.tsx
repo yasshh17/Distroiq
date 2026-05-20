@@ -19,6 +19,7 @@ import {
 
 import { QuickQueriesPanel } from "@/components/features/sidebar/QuickQueriesPanel";
 import { UserChip } from "@/components/features/auth/UserChip";
+import { KeepAlive } from "@/components/features/KeepAlive";
 import { useChatStore } from "@/stores/chat";
 import type { FilterTab } from "@/types";
 
@@ -87,6 +88,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[#071325]">
+      <KeepAlive />
       {/* ── Header ─────────────────────────────────────────────────── */}
       <header className="flex h-12 shrink-0 items-stretch border-b border-white/[0.08] bg-[#071325]">
         {/* Brand */}

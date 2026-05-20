@@ -7,5 +7,6 @@ export function KeepAlive() {
   useEffect(() => {
     startKeepAlive();
   }, []);
-  return null; 
+
+  return null;
 }

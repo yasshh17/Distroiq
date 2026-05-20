@@ -8,8 +8,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import engine
 from app.core.redis import init_redis, close_redis
+from app.core.logging import setup_logging
+from app.core.errors import (
+    DistroIQException, distroiq_exception_handler,
+    http_exception_handler, general_exception_handler
+)
 from app.api.v1.routes import health, chat, auth, files
 
+# Initialize logging
+setup_logging()
 logger = logging.getLogger(__name__)
 
 
@@ -62,6 +69,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ── Error Handlers ────────────────────────────────────────────────────
+
+from fastapi import HTTPException
+
+app.add_exception_handler(DistroIQException, distroiq_exception_handler)
+app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(Exception, general_exception_handler)
 
 
 # ── Routers ───────────────────────────────────────────────────────────
