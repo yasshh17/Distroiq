@@ -21,7 +21,6 @@ export function UserChip() {
     });
   }, []);
 
-  // Close on outside click
   useEffect(() => {
     function handleOutside(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
@@ -51,7 +50,6 @@ export function UserChip() {
           </span>
         )}
 
-        {/* Trigger */}
         <button
           onClick={() => setOpen((o) => !o)}
           className="font-grotesk flex items-center gap-1.5 rounded-lg px-2 py-1 text-[12px] uppercase tracking-wide text-white/55 transition-colors hover:text-white/95"
@@ -64,13 +62,11 @@ export function UserChip() {
           )}
         </button>
 
-        {/* Custom dropdown */}
         {open && (
           <div
             className="absolute right-0 top-full z-50 mt-2 min-w-[220px] rounded-[12px] border border-white/[0.08] bg-[#1f2a3d] p-2"
             style={{ boxShadow: "0 16px 48px rgba(0,0,0,0.4)" }}
           >
-            {/* Header — non-clickable */}
             <div className="mb-1 border-b border-white/[0.08] px-3 pb-3 pt-2">
               <p className="font-grotesk truncate text-[12px] text-white/95">
                 {email ?? "—"}
@@ -80,7 +76,6 @@ export function UserChip() {
               </p>
             </div>
 
-            {/* Sign out */}
             <button
               onClick={handleSignOut}
               className="flex w-full items-center gap-2.5 rounded-[8px] px-3 py-2.5 text-left transition-colors duration-150 hover:bg-[#2a3548]"
@@ -89,7 +84,6 @@ export function UserChip() {
               <span className="text-[13px] text-white/95">Sign out</span>
             </button>
 
-            {/* Delete account */}
             <div className="mt-1 border-t border-white/[0.08] pt-2">
               <button
                 onClick={() => {

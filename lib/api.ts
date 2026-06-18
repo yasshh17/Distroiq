@@ -9,12 +9,7 @@ const api = axios.create({
   },
 });
 
-// ── Request interceptor ───────────────────────────────────────────────
-// Attach the current session's access token to every outgoing request.
-// Reads from the Zustand store via getState() — works outside React.
-// The typeof window guard keeps this safe if api.ts is ever imported
-// in a Server Component context (no browser store available there).
-
+// typeof window guard keeps this safe if api.ts is ever imported in a Server Component
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
     const session = useAuthStore.getState().session;
@@ -24,11 +19,6 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
-
-// ── Response interceptor ──────────────────────────────────────────────
-// On 401, the session has expired or been revoked. Sign the user out so
-// the store is cleared and the middleware redirects them to /login on
-// the next navigation.
 
 api.interceptors.response.use(
   (response) => response,
@@ -42,16 +32,13 @@ api.interceptors.response.use(
 
 export default api;
 
-// ── Keep-alive ────────────────────────────────────────────────────────
-// Pings the backend health endpoint every 10 minutes to prevent
-// Render free-tier instances from spinning down between requests.
-
+// Pings the health endpoint every 10 minutes to prevent Render free-tier spin-down
 export function startKeepAlive() {
   const ping = async () => {
     try {
       await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/health`);
     } catch {}
   };
-  ping(); // immediate ping on load
-  setInterval(ping, 10 * 60 * 1000); // every 10 min
+  ping();
+  setInterval(ping, 10 * 60 * 1000);
 }

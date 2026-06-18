@@ -74,7 +74,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const clearMessages = useChatStore((s) => s.clearMessages);
   const isStreaming = useChatStore((s) => s.isStreaming);
 
-  // Persist collapse state across refreshes
   useEffect(() => {
     const stored = localStorage.getItem("sidebar-collapsed");
     if (stored !== null) setCollapsed(stored === "true");
@@ -89,9 +88,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[#071325]">
       <KeepAlive />
-      {/* ── Header ─────────────────────────────────────────────────── */}
       <header className="flex h-12 shrink-0 items-stretch border-b border-white/[0.08] bg-[#071325]">
-        {/* Brand */}
         <div className="flex shrink-0 items-center gap-2 px-4">
           <button
             onClick={() => setSidebarOpen(true)}
@@ -110,7 +107,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </span>
         </div>
 
-        {/* Center — tab navigation */}
         <div className="hidden flex-1 items-end justify-center gap-0.5 px-4 lg:flex">
           {TABS.map((tab) => (
             <button
@@ -128,7 +124,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           ))}
         </div>
 
-        {/* Right controls */}
         <div className="flex shrink-0 items-center gap-2 px-4">
           <span className="hidden items-center gap-1.5 rounded-[8px] border border-[#22c55e]/25 bg-[#22c55e]/10 px-2 py-1 sm:inline-flex">
             <span
@@ -149,9 +144,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      {/* ── Body ───────────────────────────────────────────────────── */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Mobile backdrop */}
         {sidebarOpen && (
           <div
             className="fixed inset-0 z-40 bg-black/60 lg:hidden"
@@ -159,7 +152,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           />
         )}
 
-        {/* ── Sidebar ──────────────────────────────────────────────── */}
         <aside
           className={`fixed inset-y-0 left-0 z-50 flex shrink-0 flex-col bg-[#101c2e] lg:relative lg:z-auto ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
@@ -171,7 +163,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               "width 0.25s ease, min-width 0.25s ease, transform 0.2s ease-in-out",
           }}
         >
-          {/* Mobile close */}
           <div className="flex items-center justify-between px-4 pb-1 pt-4 lg:hidden">
             <span className="font-grotesk text-[10px] uppercase tracking-widest text-white/30">
               Menu
@@ -184,27 +175,22 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </button>
           </div>
 
-          {/* Scrollable sidebar content */}
           <div className="flex flex-1 flex-col overflow-x-hidden overflow-y-auto pb-4">
-            {/* ── Brand section ──────────────────────────────────── */}
             <div
               className={`flex flex-col pt-5 ${
                 collapsed ? "items-center px-2" : "px-4"
               }`}
             >
-              {/* DQ icon tile — always visible */}
               <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-[#2563eb]">
                 <span className="font-grotesk text-[10px] font-bold text-white">DQ</span>
               </div>
 
-              {/* Tagline — expanded only */}
               {!collapsed && (
                 <p className="font-grotesk mt-1.5 text-[10px] uppercase tracking-widest text-[#2563eb]">
                   Kinetic Precision
                 </p>
               )}
 
-              {/* NEW ANALYSIS button */}
               <div className={`${collapsed ? "mt-4 w-full" : "mt-4 w-full"}`}>
                 {collapsed ? (
                   <button
@@ -228,7 +214,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
             <div className={`border-t border-white/[0.06] ${collapsed ? "mx-2 my-3" : "mx-4 my-4"}`} />
 
-            {/* ── Navigation ─────────────────────────────────────── */}
             <div className={collapsed ? "px-2" : "px-3"}>
               {!collapsed && (
                 <p className="font-grotesk mb-2 px-2 text-[10px] uppercase tracking-widest text-white/30">
@@ -272,7 +257,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
             <div className={`border-t border-white/[0.06] ${collapsed ? "mx-2 my-3" : "mx-4 my-4"}`} />
 
-            {/* ── Connected Sources ───────────────────────────────── */}
             <div className={collapsed ? "px-2" : "px-3"}>
               {!collapsed && (
                 <p className="font-grotesk mb-2 px-2 text-[10px] uppercase tracking-widest text-white/30">
@@ -316,7 +300,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
             <div className={`border-t border-white/[0.06] ${collapsed ? "mx-2 my-3" : "mx-4 my-4"}`} />
 
-            {/* ── Active Alerts ───────────────────────────────────── */}
             <div className={collapsed ? "px-2" : "px-3"}>
               {!collapsed && (
                 <p className="font-grotesk mb-2 px-2 text-[10px] uppercase tracking-widest text-white/30">
@@ -402,7 +385,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               )}
             </div>
 
-            {/* Quick Queries — expanded only */}
             {!collapsed && (
               <>
                 <div className="mx-4 my-4 border-t border-white/[0.06]" />
@@ -415,10 +397,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               </>
             )}
 
-            {/* Spacer */}
             <div className="flex-1" />
 
-            {/* ── Bottom — collapse toggle (desktop only) ──────────── */}
             <div className={`hidden pt-3 lg:block ${collapsed ? "px-2 pb-3" : "px-3 pb-3"}`}>
               <div className="mx-1 mb-3 border-t border-white/[0.06]" />
               {collapsed ? (
@@ -444,7 +424,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
         </aside>
 
-        {/* ── Main content ─────────────────────────────────────────── */}
         <main
           className="flex flex-1 flex-col overflow-hidden bg-[#071325]"
           style={{

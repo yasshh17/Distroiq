@@ -62,7 +62,6 @@ export function WelcomeScreen() {
 
   return (
     <div className="py-8 animate-in fade-in-0 slide-in-from-bottom-3 duration-500">
-      {/* Welcome banner */}
       <div className="flex items-center gap-2.5">
         <span className="h-1.5 w-1.5 rounded-full bg-[#22c55e]" style={{ animation: "breathe 2s ease-in-out infinite" }} />
         <span className="font-grotesk text-[13px] uppercase tracking-wider text-[#22c55e]">
@@ -73,7 +72,6 @@ export function WelcomeScreen() {
         SESSION: IQ-921-X · TIMESTAMP: {getUtcTime()}
       </p>
 
-      {/* Module cards */}
       <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
         {MODULES.map((mod) => (
           <button
@@ -105,7 +103,6 @@ export function WelcomeScreen() {
         ))}
       </div>
 
-      {/* Stats bar */}
       <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-[12px] border border-white/[0.08] bg-[#101c2e] px-4 py-3">
         <span className="font-grotesk flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-[#22c55e]">
           <span className="h-1.5 w-1.5 rounded-full bg-[#22c55e]" />
@@ -125,7 +122,6 @@ export function WelcomeScreen() {
         </span>
       </div>
 
-      {/* Recent activity */}
       <div className="mt-4">
         <p className="font-grotesk mb-2 text-[10px] uppercase tracking-widest text-white/30">
           Recent Activity

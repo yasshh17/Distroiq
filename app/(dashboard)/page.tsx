@@ -79,7 +79,6 @@ export default function DashboardPage() {
 
   return (
     <>
-      {/* ── Message area ─────────────────────────────────────────── */}
       <div className="flex flex-1 flex-col overflow-y-auto">
         <div className="mx-auto w-full max-w-3xl flex-1 px-4 sm:px-6">
           {!hasMessages ? (
@@ -102,7 +101,6 @@ export default function DashboardPage() {
                   );
                 }
 
-                /* Error state */
                 if (msg.isError) {
                   const lastUserMsg = messages
                     .slice(0, messages.indexOf(msg))
@@ -169,14 +167,12 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Input bar ────────────────────────────────────────────── */}
       <div
         className="shrink-0 border-t border-white/[0.08] bg-[#101c2e] px-5 py-3"
         style={{ boxShadow: "0 -4px 24px rgba(37,99,235,0.04)" }}
       >
         <div className="mx-auto max-w-3xl">
           <form onSubmit={handleSubmit}>
-            {/* Input field wrapper */}
             <div
               className="input-glow-wrapper flex items-center gap-3 rounded-[12px] border border-white/[0.08] bg-[#1f2a3d] px-4 py-3 transition-all duration-150"
               style={

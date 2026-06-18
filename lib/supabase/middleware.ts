@@ -1,17 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
-/**
- * Refreshes the Supabase auth session on every request.
- *
- * Returns the authenticated user (or null) alongside the response that
- * carries the refreshed session cookies. The caller (middleware.ts) uses
- * the user to apply redirect logic before returning the final response.
- *
- * IMPORTANT: always return `supabaseResponse` (or a response derived from
- * it) — never a plain NextResponse.next(). Returning a bare response would
- * drop the Set-Cookie headers that keep the session alive.
- */
+// Always return `supabaseResponse`, never a plain NextResponse.next() — bare responses
+// drop the Set-Cookie headers that keep the session alive.
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -24,8 +15,6 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          // Write updated cookies onto both the request (for downstream
-          // middleware) and the response (to reach the browser).
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
@@ -38,15 +27,12 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // getUser() validates the JWT with Supabase's server — never trust a
-  // locally decoded token for auth decisions.
+  // getUser() validates with Supabase's server — never trust a locally decoded token
   let user = null;
   try {
     const { data } = await supabase.auth.getUser();
     user = data.user;
   } catch (_error: unknown) {
-    // Refresh token expired or invalid —
-    // middleware will redirect to login naturally
     if (process.env.NODE_ENV === "development") {
       console.debug("Session refresh failed — redirecting to login");
     }

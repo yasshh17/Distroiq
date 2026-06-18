@@ -1,7 +1,5 @@
 import type { Session } from "@supabase/supabase-js";
 
-// ── User ─────────────────────────────────────────────────────────────
-
 export interface User {
   id: string;
   email: string;
@@ -9,15 +7,11 @@ export interface User {
   created_at: string;
 }
 
-// ── Auth ─────────────────────────────────────────────────────────────
-
 export interface AuthState {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
 }
-
-// ── Chat ─────────────────────────────────────────────────────────────
 
 export type MessageRole = "user" | "assistant";
 
@@ -35,8 +29,6 @@ export interface Conversation {
   title: string | null;
   created_at: string;
 }
-
-// ── AI Response components ────────────────────────────────────────────
 
 export interface TableComponent {
   type: "table";

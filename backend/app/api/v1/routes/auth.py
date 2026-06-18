@@ -1,11 +1,3 @@
-"""
-Auth endpoints with enterprise-grade security controls.
-
-Supabase handles the actual auth flow (sign-up, sign-in, OAuth).
-These endpoints handle post-auth tasks with comprehensive audit logging,
-security controls, and operational monitoring.
-"""
-
 import asyncio
 import uuid
 from typing import Annotated, Dict, Any, Optional
@@ -32,13 +24,11 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 class AccountDeletionRequest(BaseModel):
-    """Request model for account deletion with additional security context."""
-    confirmation: str  # Must be "DELETE MY ACCOUNT"
+    confirmation: str
     reason: Optional[str] = None
 
 
 class AccountDeletionResponse(BaseModel):
-    """Response model for successful account deletion."""
     message: str
     user_id: str
     timestamp: str
@@ -46,7 +36,6 @@ class AccountDeletionResponse(BaseModel):
 
 
 def _extract_client_info(request: Request) -> Dict[str, Any]:
-    """Extract client information for audit logging."""
     return {
         "ip_address": request.client.host if request.client else None,
         "user_agent": request.headers.get("user-agent"),
@@ -56,12 +45,6 @@ def _extract_client_info(request: Request) -> Dict[str, Any]:
 
 
 def _require_user(authorization: str | None, request: Request) -> uuid.UUID:
-    """
-    Authenticate and extract user ID with comprehensive error logging.
-
-    This replaces the inline auth logic with proper error handling
-    and audit logging for security events.
-    """
     client_info = _extract_client_info(request)
 
     if not authorization or not authorization.lower().startswith("bearer "):
@@ -83,7 +66,6 @@ def _require_user(authorization: str | None, request: Request) -> uuid.UUID:
         payload = verify_jwt(token)
         user_id = extract_user_id(payload)
 
-        # Log successful authentication
         AuditLogger.log_auth_event(
             action=AuditAction.TOKEN_REFRESH,
             outcome=AuditOutcome.SUCCESS,
@@ -102,7 +84,6 @@ def _require_user(authorization: str | None, request: Request) -> uuid.UUID:
             reason=f"jwt_verification_failed: {str(exc)}"
         )
 
-        # Log the specific authentication failure
         AuditLogger.log_auth_event(
             action=AuditAction.LOGIN_FAILURE,
             outcome=AuditOutcome.FAILURE,
@@ -118,7 +99,6 @@ def _require_user(authorization: str | None, request: Request) -> uuid.UUID:
 
 
 async def _validate_service_role_config() -> None:
-    """Validate service role configuration with detailed error messages."""
     if not settings.SUPABASE_SERVICE_ROLE_KEY:
         security_logger.error(
             "Account deletion attempted without service role key configured",
@@ -133,12 +113,8 @@ async def _validate_service_role_config() -> None:
 
 
 async def _delete_user_from_supabase(user_id: str, client_info: Dict[str, Any]) -> None:
-    """
-    Delete user from Supabase with comprehensive error handling and logging.
-    """
     async with httpx.AsyncClient(timeout=30.0) as client:
         try:
-            # First, check if user exists
             check_resp = await client.get(
                 f"{settings.SUPABASE_URL}/auth/v1/admin/users/{user_id}",
                 headers={
@@ -162,7 +138,6 @@ async def _delete_user_from_supabase(user_id: str, client_info: Dict[str, Any]) 
                     code="USER_VERIFICATION_FAILED"
                 )
 
-            # Perform the actual deletion
             delete_resp = await client.delete(
                 f"{settings.SUPABASE_URL}/auth/v1/admin/users/{user_id}",
                 headers={
@@ -235,20 +210,6 @@ async def delete_account(
     request: Request,
     authorization: Annotated[str | None, Header()] = None,
 ) -> AccountDeletionResponse:
-    """
-    Permanently delete the authenticated user account with enterprise security controls.
-
-    This endpoint implements comprehensive security measures:
-    - JWT authentication with detailed error logging
-    - Audit trail for all deletion attempts
-    - Configuration validation with specific error messages
-    - Network timeout and error handling
-    - Client information logging for security monitoring
-
-    The service role key is used server-side only and never exposed to clients.
-    All deletion attempts are logged for compliance and security monitoring.
-    """
-    # Generate correlation ID for request tracing
     correlation_id = str(uuid.uuid4())[:8]
 
     with log_context(correlation_id):
@@ -257,17 +218,12 @@ async def delete_account(
             extra={"correlation_id": correlation_id, "endpoint": "/auth/account"}
         )
 
-        # Extract client information for audit logging
         client_info = _extract_client_info(request)
-
-        # Authenticate user and extract user ID
         user_id = _require_user(authorization, request)
         user_id_str = str(user_id)
 
-        # Start audit context for this deletion process
         with AuditContext(correlation_id) as audit_ctx:
             try:
-                # Log deletion attempt
                 audit_ctx.log_event(
                     action=AuditAction.ACCOUNT_DELETE_ATTEMPT,
                     outcome=AuditOutcome.SUCCESS,  # Attempt started successfully
@@ -278,17 +234,13 @@ async def delete_account(
                     details={
                         "user_agent": client_info["user_agent"],
                         "deletion_method": "api_endpoint",
-                        "confirmation_required": False  # Not requiring confirmation in this version
+                        "confirmation_required": False
                     }
                 )
 
-                # Validate service configuration
                 await _validate_service_role_config()
-
-                # Perform the deletion
                 await _delete_user_from_supabase(user_id_str, client_info)
 
-                # Log successful deletion
                 timestamp = datetime.utcnow().isoformat() + "Z"
                 audit_id = str(uuid.uuid4())
 
@@ -320,11 +272,9 @@ async def delete_account(
                 )
 
             except HTTPException:
-                # Re-raise HTTP exceptions (they're already properly logged)
                 raise
 
             except Exception as e:
-                # Log unexpected errors
                 error_msg = f"Unexpected error during account deletion: {str(e)}"
 
                 AuditLogger.log_account_deletion(
@@ -362,21 +312,12 @@ async def debug_account_deletion_endpoint(
     request: Request,
     authorization: Annotated[str | None, Header()] = None,
 ) -> Dict[str, Any]:
-    """
-    Debug endpoint for diagnosing account deletion issues.
-
-    This endpoint performs all the validation steps without actually
-    deleting the account. Useful for troubleshooting in development.
-
-    Note: In production, this should be restricted to admin users only.
-    """
     if settings.APP_ENV == "production":
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Debug endpoints not available in production"
         )
 
-    # Still require authentication even for debug
     _ = _require_user(authorization, request)
 
     return await debug_account_deletion(user_id)

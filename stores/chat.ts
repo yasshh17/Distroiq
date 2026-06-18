@@ -3,8 +3,6 @@ import { create } from "zustand";
 import { createClient } from "@/lib/supabase/client";
 import type { ChatMessage, ChatComponent, FilterTab, ParsedContent } from "@/types";
 
-// ── SSE event shapes ──────────────────────────────────────────────────
-
 interface DeltaEvent {
   type: "delta";
   content: string;
@@ -26,8 +24,6 @@ interface ErrorEvent {
 
 type StreamEvent = DeltaEvent | ComponentEvent | DoneEvent | ErrorEvent;
 
-// ── Store ─────────────────────────────────────────────────────────────
-
 export interface ChatState {
   messages: ChatMessage[];
   activeTab: FilterTab;
@@ -40,19 +36,15 @@ export interface ChatState {
 }
 
 export const useChatStore = create<ChatState>()((set, get) => ({
-  // ── Initial state ─────────────────────────────────────────────────
   messages: [],
   activeTab: "All",
   isStreaming: false,
   sessionStart: null,
 
-  // ── setActiveTab ──────────────────────────────────────────────────
   setActiveTab: (tab) => set({ activeTab: tab }),
 
-  // ── clearMessages ─────────────────────────────────────────────────
   clearMessages: () => set({ messages: [], sessionStart: null }),
 
-  // ── sendMessage ───────────────────────────────────────────────────
   sendMessage: async (text: string) => {
     const { isStreaming } = get();
     if (isStreaming || !text.trim()) return;
@@ -61,7 +53,6 @@ export const useChatStore = create<ChatState>()((set, get) => ({
     const assistantId = crypto.randomUUID();
     const now = new Date().toISOString();
 
-    // Append user bubble + streaming placeholder
     set((s) => ({
       messages: [
         ...s.messages,
@@ -155,35 +146,34 @@ export const useChatStore = create<ChatState>()((set, get) => ({
               const accumulated =
                 get().messages.find((m) => m.id === assistantId)?.content ?? "";
 
-              // Try to extract JSON from anywhere in the response.
-              // Claude sometimes outputs prose before the JSON block.
+              // Claude sometimes outputs prose before the JSON block
               let parsed: Record<string, unknown> | null = null;
 
-              // First try: direct parse (clean JSON response)
+              // Trim first so regex anchors work even with leading newlines
+              const trimmed = accumulated.trim();
+              const clean = trimmed
+                .replace(/^```json\s*/i, "")
+                .replace(/```\s*$/, "")
+                .trim();
+
               try {
-                const clean = accumulated
-                  .replace(/^```json\s*/i, "")
-                  .replace(/```\s*$/, "")
-                  .trim();
                 const candidate = JSON.parse(clean) as Record<string, unknown>;
                 if (candidate.text !== undefined) parsed = candidate;
               } catch {}
 
-              // Second try: extract JSON block from mixed content
+              // Fallback: extract from first { to last }
               if (!parsed) {
-                const jsonMatch =
-                  accumulated.match(/```json\s*([\s\S]*?)```/i) ??
-                  accumulated.match(/(\{[\s\S]*"text"[\s\S]*"components"[\s\S]*\})/);
-                if (jsonMatch) {
+                const first = accumulated.indexOf("{");
+                const last = accumulated.lastIndexOf("}");
+                if (first !== -1 && last > first) {
                   try {
-                    const candidate = JSON.parse(jsonMatch[1]) as Record<string, unknown>;
+                    const candidate = JSON.parse(accumulated.slice(first, last + 1)) as Record<string, unknown>;
                     if (candidate.text !== undefined) parsed = candidate;
                   } catch {}
                 }
               }
 
               if (parsed) {
-                // Normalize: if parsed.text is empty, fall back to the raw accumulated content
                 const finalText =
                   typeof parsed.text === "string" && parsed.text.trim()
                     ? parsed.text
@@ -204,7 +194,6 @@ export const useChatStore = create<ChatState>()((set, get) => ({
                   isStreaming: false,
                 }));
               } else {
-                // JSON parsing failed — wrap the raw content so the bubble never renders blank
                 set((s) => ({
                   messages: s.messages.map((m) =>
                     m.id === assistantId
@@ -227,8 +216,6 @@ export const useChatStore = create<ChatState>()((set, get) => ({
           }
         }
 
-        // Safety net: if the stream closed without a done event, reset isStreaming.
-        // Uses get() for fresh state — assistantId is from the current call's closure.
         const stillStreaming = get().messages.find((m) => m.id === assistantId)?.isStreaming;
         if (stillStreaming) {
           const fallbackContent =
@@ -249,8 +236,6 @@ export const useChatStore = create<ChatState>()((set, get) => ({
           }));
         }
       } finally {
-        // Release the reader unconditionally so the browser can close/reuse
-        // the connection before the next sendMessage call begins.
         void reader.cancel();
       }
     } catch {

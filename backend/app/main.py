@@ -15,25 +15,19 @@ from app.core.errors import (
 )
 from app.api.v1.routes import health, chat, auth, files
 
-# Initialize logging
 setup_logging()
 logger = logging.getLogger(__name__)
 
 
-# ── Lifespan ──────────────────────────────────────────────────────────
-
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
-    """Start up the app; dispose the DB engine pool and Redis on shutdown."""
     logger.info("DistroIQ API starting up")
 
-    # Initialize Redis connection
     try:
         await init_redis()
         logger.info("Redis initialized successfully")
     except Exception as exc:
         logger.error(f"Failed to initialize Redis: {exc}")
-        # Continue startup even if Redis fails (for development)
 
     yield
 
@@ -41,8 +35,6 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
     await close_redis()
     await engine.dispose()
 
-
-# ── App factory ───────────────────────────────────────────────────────
 
 app = FastAPI(
     title="DistroIQ API",
@@ -54,8 +46,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-
-# ── Middleware ────────────────────────────────────────────────────────
 
 app.add_middleware(
     CORSMiddleware,
@@ -71,16 +61,12 @@ app.add_middleware(
 )
 
 
-# ── Error Handlers ────────────────────────────────────────────────────
-
 from fastapi import HTTPException
 
 app.add_exception_handler(DistroIQException, distroiq_exception_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(Exception, general_exception_handler)
 
-
-# ── Routers ───────────────────────────────────────────────────────────
 
 _V1 = "/api/v1"
 

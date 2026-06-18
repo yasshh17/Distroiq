@@ -48,7 +48,6 @@ export function DeleteAccountModal({ open, onClose }: DeleteAccountModalProps) {
 
     const supabase = createClient();
 
-    // Step a — re-verify password
     const { data: userData } = await supabase.auth.getUser();
     const email = userData.user?.email;
 
@@ -69,7 +68,6 @@ export function DeleteAccountModal({ open, onClose }: DeleteAccountModalProps) {
       return;
     }
 
-    // Step b — delete via backend (uses service role key)
     try {
       await api.delete("/api/v1/auth/account");
     } catch {
@@ -78,7 +76,6 @@ export function DeleteAccountModal({ open, onClose }: DeleteAccountModalProps) {
       return;
     }
 
-    // Step c — sign out and redirect
     await supabase.auth.signOut();
     router.push("/login?deleted=true");
   }

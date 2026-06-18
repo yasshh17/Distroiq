@@ -1,29 +1,23 @@
 import type { Variants } from "framer-motion";
 
-// ─── Durations (seconds) ───────────────────────────────────────────────────
 export const DUR_MICRO = 0.14;
 export const DUR_SHORT = 0.24;
 export const DUR_BASE = 0.36;
 export const DUR_MEDIUM = 0.48;
 export const DUR_LONG = 0.60;
 
-// ─── Easing ───────────────────────────────────────────────────────────────
-// Cubic-bezier arrays — no springs (springs feel playful, not enterprise)
+// No springs — they feel playful, not enterprise
 export const EASE_OUT_EXPO: [number, number, number, number] = [0.22, 1, 0.36, 1];
 export const EASE_OUT_QUINT: [number, number, number, number] = [0.16, 1, 0.30, 1];
 export const EASE_STANDARD: [number, number, number, number] = [0.4, 0, 0.2, 1];
 
-// ─── Stagger ──────────────────────────────────────────────────────────────
 export const STAGGER_TIGHT = 0.06;
 export const STAGGER_BASE = 0.07;
 
-// ─── Translate distances (px) ─────────────────────────────────────────────
 export const DIST_SM = 4;
 export const DIST_MD = 6;
 export const DIST_LG = 8;
 export const DIST_XL = 12;
-
-// ─── Reusable variants ────────────────────────────────────────────────────
 
 export const navVariant: Variants = {
   hidden: { opacity: 0, y: -DIST_SM },
@@ -65,7 +59,6 @@ export const rightContainer: Variants = {
   },
 };
 
-// item — used by most left-panel children (fade + slide up)
 export const itemUp: Variants = {
   hidden: { opacity: 0, y: DIST_MD },
   visible: {
@@ -75,7 +68,6 @@ export const itemUp: Variants = {
   },
 };
 
-// item — used by right-panel bullets (fade + slide in from left)
 export const itemLeft: Variants = {
   hidden: { opacity: 0, x: -DIST_LG },
   visible: {
@@ -85,7 +77,6 @@ export const itemLeft: Variants = {
   },
 };
 
-// DQ watermark entrance
 export const watermarkVariant: Variants = {
   hidden: { opacity: 0, scale: 0.96 },
   visible: {
